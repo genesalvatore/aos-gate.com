@@ -1,0 +1,19 @@
+services:
+  aos-gate:
+    build: .
+    container_name: aos-gate
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+      - "3101:3101"
+    environment:
+      - GATE_PORT=3100
+      - DASHBOARD_PORT=3101
+      - LOG_DIR=/data/logs
+      - POLICY_FILE=/app/policy.json
+    volumes:
+      - aos-gate-logs:/data
+      - ./policy.json:/app/policy.json:ro
+
+volumes:
+  aos-gate-logs:
