@@ -18,7 +18,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import express from 'express';
-import { mkdirSync, appendFileSync, readFileSync, existsSync, readdirSync } from 'fs';
+import { mkdirSync, appendFileSync, readFileSync, existsSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 const app = express();
@@ -355,8 +355,15 @@ dashboard.get('/login', (req, res) => {
 </style></head>
 <body>
   <div class="login-box">
-    <div class="title">AOS Gate</div>
-    <div class="subtitle">Sovereign Admin</div>
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem;">
+      <svg style="width: 48px; height: 48px; color: #fff; margin-bottom: 1rem;" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,20 80,40 50,100" fill="none" stroke="currentColor" stroke-width="8"/>
+        <polygon points="50,40 70,55 50,80" fill="currentColor" />
+        <line x1="35" y1="10" x2="35" y2="90" stroke="currentColor" stroke-width="12" />
+      </svg>
+      <div class="title">AOS Gate</div>
+      <div class="subtitle" style="margin-bottom: 0;">Sovereign Admin</div>
+    </div>
     <form method="POST" action="/login">
       <input type="password" name="password" placeholder="Passphrase" required autofocus/>
       <button type="submit">Authenticate</button>
@@ -382,14 +389,105 @@ dashboard.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
+// A common layout wrapper for the admin UI
+const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
+<html><head><title>AOS Gate — ${title}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; display: flex; min-height: 100vh; }
+  .sidebar { width: 250px; background: #151515; border-right: 1px solid #222; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #222; }
+  .sidebar-title { font-weight: 700; font-size: 1.25rem; color: #fff; letter-spacing: -0.02em; }
+  .sidebar-nav { flex: 1; padding: 1.5rem 0; }
+  .nav-item { display: block; padding: 0.75rem 1.5rem; color: #888; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+  .nav-item:hover { color: #fff; background: #222; }
+  .nav-item.active { color: #fff; border-left: 3px solid #fff; background: #222; }
+  .sidebar-footer { padding: 1.5rem; border-top: 1px solid #222; }
+  .logout-btn { display: block; width: 100%; text-align: center; padding: 0.5rem; background: transparent; color: #888; text-decoration: none; border: 1px solid #333; border-radius: 4px; font-size: 0.8rem; transition: all 0.2s; }
+  .logout-btn:hover { color: #fff; border-color: #666; }
+  .main-content { flex: 1; padding: 2.5rem 3rem; overflow-y: auto; background: #0a0a0a; }
+  h2 { font-size: 1.5rem; margin-bottom: 0.25rem; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 2rem; font-family: monospace; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
+  .stat { background: #151515; border: 1px solid #222; border-radius: 8px; padding: 1.25rem; }
+  .stat .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #666; }
+  .stat .value { font-size: 2rem; font-weight: 700; margin-top: 0.25rem; }
+  .passed .value { color: #4ade80; }
+  .blocked .value { color: #f87171; }
+  .pii .value { color: #fbbf24; }
+  .errors .value { color: #f97316; }
+  .card { background: #151515; border: 1px solid #222; border-radius: 8px; margin-bottom: 2rem; overflow: hidden; }
+  .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid #222; font-weight: 600; font-size: 0.9rem; background: #111; color: #ddd; }
+  .card-body { padding: 1.5rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: 0.75rem 1.5rem; color: #666; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.1em; border-bottom: 1px solid #222; background: #111; }
+  td { padding: 0.75rem 1.5rem; border-bottom: 1px solid #151515; }
+  .mono { font-family: monospace; font-size: 0.8rem; color: #888; }
+  .action-passed { color: #4ade80; }
+  .action-blocked { color: #f87171; font-weight: 600; }
+  .action-pii_warning { color: #fbbf24; }
+  .action-error { color: #f97316; }
+  /* Forms */
+  .form-group { margin-bottom: 1.5rem; }
+  label { display: block; font-size: 0.75rem; font-weight: 600; color: #999; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  textarea, input[type="text"], select { width: 100%; padding: 0.75rem; background: #0a0a0a; border: 1px solid #333; color: #e0e0e0; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+  textarea { min-height: 100px; resize: vertical; }
+  button.submit-btn { padding: 0.75rem 1.5rem; background: #fff; color: #000; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  button.submit-btn:hover { background: #ccc; }
+  .pattern-row { display: grid; grid-template-columns: 1fr 2fr 80px 40px; gap: 0.75rem; margin-bottom: 0.75rem; align-items: start; }
+  .btn-icon { background: #222; color: #fff; border: 1px solid #333; padding: 0.5rem; border-radius: 4px; cursor: pointer; text-align: center; }
+  .btn-icon:hover { background: #333; }
+  .btn-add { background: #151515; color: #fff; border: 1px dashed #333; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.8rem; border-radius: 4px; display: inline-block; margin-top: 0.5rem; }
+  .btn-add:hover { border-color: #666; }
+</style>
+<script>
+  function addPatternRow() {
+    const container = document.getElementById('patterns-container');
+    const html = \`
+      <div class="pattern-row">
+        <input type="text" name="patternLabel" placeholder="Label (e.g. Internal Pricing)" required>
+        <input type="text" name="patternRegex" placeholder="Regex (e.g. confidential\\\\s+pricing)" required>
+        <input type="text" name="patternFlags" placeholder="Flags (gi)" value="gi">
+        <button type="button" class="btn-icon" onclick="this.parentElement.remove()">✕</button>
+      </div>\`;
+    container.insertAdjacentHTML('beforeend', html);
+  }
+</script>
+</head><body>
+  <div class="sidebar">
+    <div class="sidebar-header" style="display: flex; align-items: center; gap: 1rem;">
+      <svg style="width: 32px; height: 32px; color: #fff; flex-shrink: 0;" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,20 80,40 50,100" fill="none" stroke="currentColor" stroke-width="8"/>
+        <polygon points="50,40 70,55 50,80" fill="currentColor" />
+        <line x1="35" y1="10" x2="35" y2="90" stroke="currentColor" stroke-width="12" />
+      </svg>
+      <div>
+        <div class="sidebar-title">AOS Gate</div>
+        <div style="font-size: 0.7rem; color:#666; margin-top:2px;">Sovereign Control</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <a href="/" class="nav-item \${currentPath === '/' ? 'active' : ''}">Activity Log</a>
+      <a href="/rules" class="nav-item \${currentPath === '/rules' ? 'active' : ''}">Policy & Rules</a>
+    </div>
+    <div class="sidebar-footer">
+      <a href="/logout" class="logout-btn">Sign Out</a>
+    </div>
+  </div>
+  <div class="main-content">
+    <h2>\${title}</h2>
+    \${content}
+  </div>
+</body></html>\`;
+
 dashboard.get('/', requireAuth, (_req, res) => {
     // Read today's log
     const date = new Date().toISOString().split('T')[0];
-    const logFile = join(LOG_DIR, `gate-${date}.jsonl`);
+    const logFile = join(LOG_DIR, \`gate-\${date}.jsonl\`);
     let entries = [];
     if (existsSync(logFile)) {
         entries = readFileSync(logFile, 'utf-8')
-            .split('\n')
+            .split('\\n')
             .filter(Boolean)
             .map(line => { try { return JSON.parse(line); } catch { return null; } })
             .filter(Boolean);
@@ -400,56 +498,119 @@ dashboard.get('/', requireAuth, (_req, res) => {
     const piiWarnings = entries.filter(e => e.action === 'PII_WARNING').length;
     const errors = entries.filter(e => e.action === 'ERROR').length;
 
-    res.send(`<!DOCTYPE html>
-<html><head><title>AOS Gate — Audit Dashboard</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 2rem; }
-  h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
-  .stat { background: #151515; border: 1px solid #222; border-radius: 8px; padding: 1.25rem; }
-  .stat .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #666; }
-  .stat .value { font-size: 2rem; font-weight: 700; margin-top: 0.25rem; }
-  .passed .value { color: #4ade80; }
-  .blocked .value { color: #f87171; }
-  .pii .value { color: #fbbf24; }
-  .errors .value { color: #f97316; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  th { text-align: left; padding: 0.5rem; color: #666; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.1em; border-bottom: 1px solid #222; }
-  td { padding: 0.5rem; border-bottom: 1px solid #151515; }
-  .action-passed { color: #4ade80; }
-  .action-blocked { color: #f87171; font-weight: 600; }
-  .action-pii_warning { color: #fbbf24; }
-  .action-error { color: #f97316; }
-  .mono { font-family: monospace; font-size: 0.75rem; color: #888; }
-</style></head><body>
-  <h1 style="display: flex; justify-content: space-between; align-items: center;">
-    <span>🚪 AOS Gate — Audit Log</span>
-    <a href="/logout" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; background: #222; color: #fff; text-decoration: none; border-radius: 4px; font-weight: normal; border: 1px solid #333;">Sign Out</a>
-  </h1>
-  <div class="subtitle">${date} · ${entries.length} events</div>
-  <div class="stats">
-    <div class="stat passed"><div class="label">Passed</div><div class="value">${passed}</div></div>
-    <div class="stat blocked"><div class="label">Blocked</div><div class="value">${blocked}</div></div>
-    <div class="stat pii"><div class="label">PII Warnings</div><div class="value">${piiWarnings}</div></div>
-    <div class="stat errors"><div class="label">Errors</div><div class="value">${errors}</div></div>
-  </div>
-  <table>
-    <thead><tr><th>Time</th><th>Action</th><th>Provider</th><th>Model</th><th>Tokens (In/Out)</th><th>Duration</th><th>Notes</th></tr></thead>
-    <tbody>
-      ${entries.reverse().map(e => `<tr>
-        <td class="mono">${e.timestamp?.split('T')[1]?.substring(0,8) || '—'}</td>
-        <td class="action-${(e.action||'').toLowerCase()}">${e.action}</td>
-        <td>${e.provider || '—'}</td>
-        <td class="mono">${e.model || '—'}</td>
-        <td class="mono">${e.inputTokens || '—'} / ${e.outputTokens || '—'}</td>
-        <td class="mono">${e.durationMs ? e.durationMs + 'ms' : '—'}</td>
-        <td class="mono">${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '') || ''}</td>
-      </tr>`).join('')}
-    </tbody>
-  </table>
-</body></html>`);
+    const content = \`
+      <div class="subtitle">Log File: gate-\${date}.jsonl · \${entries.length} requests captured</div>
+      <div class="stats">
+        <div class="stat passed"><div class="label">Passed</div><div class="value">\${passed}</div></div>
+        <div class="stat blocked"><div class="label">Blocked</div><div class="value">\${blocked}</div></div>
+        <div class="stat pii"><div class="label">PII Warnings</div><div class="value">\${piiWarnings}</div></div>
+        <div class="stat errors"><div class="label">Errors</div><div class="value">\${errors}</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Target Requests</div>
+        <table>
+          <thead><tr><th>Time</th><th>Action</th><th>Provider</th><th>Model</th><th>Tokens (In/Out)</th><th>Duration</th><th>Notes</th></tr></thead>
+          <tbody>
+            \${entries.length > 0 ? entries.reverse().map(e => \`<tr>
+              <td class="mono">\${e.timestamp?.split('T')[1]?.substring(0,8) || '—'}</td>
+              <td class="action-\${(e.action||'').toLowerCase()}">\${e.action}</td>
+              <td>\${e.provider || '—'}</td>
+              <td class="mono">\${e.model || '—'}</td>
+              <td class="mono">\${e.inputTokens || '—'} / \${e.outputTokens || '—'}</td>
+              <td class="mono">\${e.durationMs ? e.durationMs + 'ms' : '—'}</td>
+              <td class="mono" style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="\${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '')}">
+                \${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '') || ''}
+              </td>
+            </tr>\`).join('') : \`<tr><td colspan="7" style="text-align:center; padding: 2rem; color:#666;">No audit records found for today.</td></tr>\`}
+          </tbody>
+        </table>
+      </div>
+    \`;
+    res.send(renderLayout('Dashboard Audit Log', content, '/'));
+});
+
+dashboard.get('/rules', requireAuth, (_req, res) => {
+    let currentPolicy = { logLevel: 'full', allowedModels: [], blockedPatterns: [] };
+    if (existsSync(POLICY_FILE)) {
+        try { currentPolicy = JSON.parse(readFileSync(POLICY_FILE, 'utf-8')); } catch (e) {}
+    }
+
+    let messageHtml = '';
+    if (_req.query.saved) {
+        messageHtml = \`<div style="background: #064e3b; color: #a7f3d0; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-weight: 600; border: 1px solid #047857;">✓ Policy updated securely. Changes applied to active memory immediately.</div>\`;
+    }
+
+    const content = \`
+      <div class="subtitle">Gate configuration applied at the proxy level. Edits are deterministic.</div>
+      \${messageHtml}
+      <form method="POST" action="/rules">
+        <div class="card">
+          <div class="card-header">General Rules</div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Log Level</label>
+              <select name="logLevel">
+                <option value="full" \${currentPolicy.logLevel === 'full' ? 'selected' : ''}>Full (Capture Prompt & Response Text)</option>
+                <option value="meta" \${currentPolicy.logLevel !== 'full' ? 'selected' : ''}>Meta Only (Capture Usage Stats, Mask Text)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Allowed Models (One per line)</label>
+              <textarea name="allowedModels">\${(currentPolicy.allowedModels || []).join('\\n')}</textarea>
+              <div style="font-size:0.75rem; color:#666; margin-top:0.5rem;">Leave empty to allow all requested models.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Content Block Rules (Regex)</div>
+          <div class="card-body" style="padding-bottom:1rem;">
+            <div id="patterns-container">
+              \${(currentPolicy.blockedPatterns || []).map(p => \`
+                <div class="pattern-row">
+                  <input type="text" name="patternLabel" value="\${p.label || ''}" placeholder="Label" required>
+                  <input type="text" name="patternRegex" value="\${p.pattern || ''}" placeholder="Regex" required>
+                  <input type="text" name="patternFlags" value="\${p.flags || 'gi'}" placeholder="Flags">
+                  <button type="button" class="btn-icon" onclick="this.parentElement.remove()">✕</button>
+                </div>
+              \`).join('')}
+            </div>
+            <button type="button" class="btn-add" onclick="addPatternRow()">+ Add Block Rule</button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" style="width:100%; max-width:250px;">Save Rules to Disk</button>
+      </form>
+    \`;
+    res.send(renderLayout('Policy Settings', content, '/rules'));
+});
+
+dashboard.post('/rules', requireAuth, (req, res) => {
+    // Process form body structure
+    const updatedPolicy = {
+        logLevel: req.body.logLevel || 'full',
+        allowedModels: (req.body.allowedModels || '').replace(/\\r\\n/g, '\\n').split('\\n').map(s => s.trim()).filter(Boolean),
+        blockedPatterns: []
+    };
+
+    const labels = req.body.patternLabel ? (Array.isArray(req.body.patternLabel) ? req.body.patternLabel : [req.body.patternLabel]) : [];
+    const regexps = req.body.patternRegex ? (Array.isArray(req.body.patternRegex) ? req.body.patternRegex : [req.body.patternRegex]) : [];
+    const flags = req.body.patternFlags ? (Array.isArray(req.body.patternFlags) ? req.body.patternFlags : [req.body.patternFlags]) : [];
+
+    for (let i = 0; i < labels.length; i++) {
+        if (regexps[i]) {
+            updatedPolicy.blockedPatterns.push({
+                label: labels[i],
+                pattern: regexps[i],
+                flags: flags[i] || 'gi'
+            });
+        }
+    }
+
+    writeFileSync(POLICY_FILE, JSON.stringify(updatedPolicy, null, 4));
+    policy = updatedPolicy; // Hot reload active memory
+
+    res.redirect('/rules?saved=1');
 });
 
 // API endpoint for log data
