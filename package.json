@@ -1,6 +1,6 @@
 {
   "name": "aos-gate",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Drop-in LLM API proxy with audit logging for N8N workflows",
   "type": "module",
   "main": "gate.js",
