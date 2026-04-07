@@ -20,6 +20,10 @@
 import express from 'express';
 import { mkdirSync, appendFileSync, readFileSync, existsSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import https from 'https';
+
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
+const GATE_VERSION = pkg.version || '1.0.0';
 
 const app = express();
 const GATE_PORT = process.env.GATE_PORT || 3100;
@@ -471,6 +475,8 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
       <a href="/rules" class="nav-item \${currentPath === '/rules' ? 'active' : ''}">Policy & Rules</a>
     </div>
     <div class="sidebar-footer">
+      <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.5rem; text-align: center;">v\${GATE_VERSION}</div>
+      <button onclick="checkUpdate()" id="update-btn" style="width: 100%; padding:0.5rem; margin-bottom:0.5rem; background:#111; color:#888; border:1px solid #333; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">Check for Updates</button>
       <a href="/logout" class="logout-btn">Sign Out</a>
     </div>
   </div>
@@ -478,6 +484,26 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
     <h2>\${title}</h2>
     \${content}
   </div>
+  <script>
+    function checkUpdate() {
+       const btn = document.getElementById('update-btn');
+       btn.innerText = 'Checking...';
+       fetch('/update').then(r=>r.json()).then(d => {
+           if (d.updateAvailable) {
+               btn.style.background = '#064e3b';
+               btn.style.color = '#a7f3d0';
+               btn.style.border = '1px solid #047857';
+               btn.innerText = 'v' + d.latest + ' Available! ↓';
+               btn.onclick = () => alert('New version available. SSH into The Forge and run:\\n\\ncd aos-gate\\ngit pull origin main\\ndocker compose up -d --build');
+           } else {
+               btn.innerText = 'Up to Date ✓';
+               setTimeout(() => { btn.innerText = 'Check for Updates'; }, 3000);
+           }
+       }).catch(e => {
+           btn.innerText = 'Update Check Failed';
+       });
+    }
+  </script>
 </body></html>\`;
 
 dashboard.get('/', requireAuth, (_req, res) => {
@@ -625,6 +651,25 @@ dashboard.get('/api/logs', requireAuth, (_req, res) => {
         logs[file.replace('gate-', '').replace('.jsonl', '')] = entries;
     }
     res.json(logs);
+});
+
+dashboard.get('/update', requireAuth, (req, res) => {
+    https.get('https://raw.githubusercontent.com/genesalvatore/aos-gate.com/main/package.json', (resp) => {
+        let data = '';
+        resp.on('data', (c) => data += c);
+        resp.on('end', () => {
+            try {
+                const remote = JSON.parse(data);
+                if (remote.version !== GATE_VERSION) {
+                    res.json({ updateAvailable: true, current: GATE_VERSION, latest: remote.version });
+                } else {
+                    res.json({ updateAvailable: false, current: GATE_VERSION });
+                }
+            } catch(e) {
+                res.status(500).json({ error: 'Failed to fetch upstream' });
+            }
+        });
+    }).on("error", () => res.status(500).json({ error: 'Network error' }));
 });
 
 dashboard.listen(DASHBOARD_PORT, () => {
