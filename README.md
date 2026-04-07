@@ -1,12 +1,24 @@
 # 🚪 AOS Gate
 
-**A simple logging proxy that sits between your AI automation tool and the AI provider.**
+**The open-source governance toolkit for AI workflows.**
 
-Every time your automation (N8N, Make, Zapier, custom scripts) calls an AI model, AOS Gate logs the exchange — what you sent, what came back, how long it took, and whether any sensitive data was in the request. It also gives you a dashboard to see everything at a glance.
+AOS Gate is a transparent audit proxy that sits between your AI automation tools (N8N, Make, Zapier, custom scripts) and the AI provider. It logs every exchange, detects sensitive data, enforces policy rules, and gives you a full enterprise dashboard — all in a single Docker container.
 
-**Think of it like a security camera for your AI calls.** It doesn't change what the AI does — it just makes sure you have a record of everything.
+**Think of it like a security camera + policy engine for your AI calls.** It records everything, blocks what you tell it to block, and gives you the forensic trail to prove what happened.
+
+This is the reference implementation of the [AOS Standard 1.0](https://aos-governance.com) — a governance architecture for the Intelligence Age.
 
 Licensed under the [AOS Humanitarian License v1.0.1](LICENSE) — peaceful civilian use only.
+
+---
+
+## What's Included
+
+| Component | Description |
+|-----------|-------------|
+| **AOS Gate Proxy** (port 3100) | Transparent API proxy with audit logging, PII detection, and policy enforcement |
+| **Admin Dashboard** (port 3101) | Enterprise UI with activity log, usage stats, policy editor, and log export |
+| **Governance Skill** (`skill/`) | Agent-installable governance scripts for constitutional verification |
 
 ---
 
@@ -32,8 +44,8 @@ If you see a version number, you're good.
 Open a terminal (Command Prompt on Windows, Terminal on Mac/Linux) and run:
 
 ```bash
-git clone https://github.com/genesalvatore/aos-gate.git
-cd aos-gate
+git clone https://github.com/genesalvatore/aos-gate.com.git
+cd aos-gate.com
 ```
 
 **Don't have git?** You can also download the ZIP file from GitHub and unzip it.
@@ -61,12 +73,12 @@ Open your web browser and go to:
 http://localhost:3101
 ```
 
-You will be presented with the **Sovereign Admin** login screen. 
+You will be presented with the **Sovereign Admin** login screen.
 > **Default Passphrase:** `aos-admin`
 
 *(You can change this by setting the `ADMIN_PASSWORD` variable in your environment or `docker-compose.yml`.)*
 
-Once logged in, you should see the **AOS Gate Dashboard** — a dark screen showing "0 events". This is your audit log. It's empty because nothing has gone through the gate yet.
+Once logged in, you should see the **AOS Gate Dashboard** — showing your audit log, usage stats, policy editor, and log export tools.
 
 ### Step 4: Update Your N8N Nodes
 
@@ -98,13 +110,24 @@ Run one of your N8N workflows that calls an AI model. Then check the dashboard a
 
 ---
 
-## ⚙️ Customizing the Rules (Optional)
+## 📊 Dashboard
 
-AOS Gate comes with a `policy.json` file. You can edit this to add your own rules.
+The admin dashboard at `:3101` provides four pages:
+
+| Page | Description |
+|------|-------------|
+| **Activity Log** | Real-time audit trail with date navigation (← → arrows) |
+| **Usage Stats** | 14-day request volume chart + model usage breakdown |
+| **Policy & Rules** | GUI editor for log levels, model allowlists, and regex block rules |
+| **Export Logs** | One-click JSON/CSV download per day for compliance and evidence |
+
+---
+
+## ⚙️ Customizing the Rules
+
+You can configure policy directly from the **Policy & Rules** page in the dashboard, or edit `policy.json` manually.
 
 ### Restrict Which AI Models Can Be Used
-
-Open `policy.json` and edit the `allowedModels` list:
 
 ```json
 {
@@ -140,84 +163,34 @@ Set `logLevel` to control how much is logged:
 - `"full"` — Logs the first 2,000 characters of every prompt and response (default)
 - `"meta"` — Logs only metadata (model, tokens, duration) — no prompt text
 
-After editing `policy.json`, restart AOS Gate:
-
-```bash
-docker compose restart
-```
-
 ---
 
-## 📊 Reading the Dashboard
+## 🛡️ Governance Skill (Agent-Installable)
 
-Open `http://localhost:3101` in your browser.
+The `skill/` directory contains the **AOS Governance Skill** — deterministic verification scripts that an AI agent can use to check its own actions against the AOS Constitution before execution.
 
-| Color | Meaning |
-|---|---|
-| 🟢 Green (PASSED) | Call went through normally |
-| 🔴 Red (BLOCKED) | Call was blocked by a policy rule |
-| 🟡 Yellow (PII_WARNING) | Sensitive data detected (SSN, credit card, email, phone) |
-| 🟠 Orange (ERROR) | Something went wrong connecting to the AI provider |
+### How It Works
 
----
+1. **Intercept** — Agent proposes an action
+2. **Verify** — `verify_action.py` checks against the Constitution
+3. **Gate** — Action proceeds only if all checks pass. If not, it is blocked and logged.
 
-## 📁 Where Are the Logs?
+### Key Scripts
 
-Logs are stored as daily files inside the Docker volume. To access them:
+| Script | Purpose |
+|--------|---------|
+| `skill/scripts/verify_action.py` | Deterministic constitutional verification |
+| `skill/scripts/log_evidence.py` | Immutable evidence logging to cryptographic ledger |
+| `skill/SKILL.md` | Agent instructions and workflow |
 
-```bash
-# See today's log
-docker exec aos-gate cat /data/logs/gate-$(date +%Y-%m-%d).jsonl
-
-# Or copy all logs to your computer
-docker cp aos-gate:/data/logs ./my-logs
-```
-
-Each line in the log file is a JSON object. You can open them in any text editor or import them into a spreadsheet.
-
----
-
-## 🔧 Common Issues
-
-### "Cannot connect to aos-gate from N8N"
-
-Your N8N and AOS Gate need to be on the same Docker network. Add this to your N8N's `docker-compose.yml`:
-
-```yaml
-services:
-  n8n:
-    # ... your existing n8n config ...
-    networks:
-      - default
-      - aos-gate_default
-
-networks:
-  aos-gate_default:
-    external: true
-```
-
-Then restart N8N: `docker compose restart`
-
-### "I changed policy.json but nothing happened"
-
-Restart the gate: `docker compose restart`
-
-### "I want to stop AOS Gate"
+### Installation in Any Agent
 
 ```bash
-cd aos-gate
-docker compose down
+cp -r skill/ ./your-agent/skills/aos-governance
+export AOS_CONSTITUTION_PATH=./skills/aos-governance/references
 ```
 
-Your N8N workflows will stop working until you either restart AOS Gate or change the URLs back to the original provider URLs.
-
-### "I want to update AOS Gate"
-
-```bash
-cd aos-gate
-git pull
-docker compose up -d --build
-```
+The skill is platform-agnostic — works with Claude, ChatGPT, Gemini, open-source models, or custom implementations.
 
 ---
 
@@ -252,6 +225,78 @@ AOS Gate is a **transparent proxy**. It doesn't change your prompts or responses
 
 ---
 
+## 📁 Where Are the Logs?
+
+Logs are stored as daily files inside the Docker volume. To access them:
+
+```bash
+# See today's log
+docker exec aos-gate cat /data/logs/gate-$(date +%Y-%m-%d).jsonl
+
+# Or copy all logs to your computer
+docker cp aos-gate:/data/logs ./my-logs
+```
+
+You can also download logs directly from the **Export Logs** page in the dashboard as JSON or CSV.
+
+---
+
+## 🔧 Common Issues
+
+### "Cannot connect to aos-gate from N8N"
+
+Your N8N and AOS Gate need to be on the same Docker network. Add this to your N8N's `docker-compose.yml`:
+
+```yaml
+services:
+  n8n:
+    # ... your existing n8n config ...
+    networks:
+      - default
+      - aos-gate_default
+
+networks:
+  aos-gate_default:
+    external: true
+```
+
+Then restart N8N: `docker compose restart`
+
+### "I changed policy.json but nothing happened"
+
+Edit policy from the dashboard instead — changes apply immediately. If editing manually, restart the gate: `docker compose restart`
+
+### "I want to stop AOS Gate"
+
+```bash
+cd aos-gate.com
+docker compose down
+```
+
+Your N8N workflows will stop working until you either restart AOS Gate or change the URLs back to the original provider URLs.
+
+### "I want to update AOS Gate"
+
+```bash
+cd aos-gate.com
+git pull
+docker compose up -d --build
+```
+
+---
+
+## 🌐 AOS Ecosystem
+
+| Site | Purpose |
+|------|---------|
+| [aos-governance.com](https://aos-governance.com) | The AOS Standard — technical specifications and policy responses |
+| [aos-constitution.com](https://aos-constitution.com) | Constitutional governance framework and Humanitarian License |
+| [aos-patents.com](https://aos-patents.com) | Full patent portfolio registry (101 USPTO filings) |
+| [aos-evidence.com](https://aos-evidence.com) | Evidence preservation and validation |
+| [aos-foundation.com](https://aos-foundation.com) | Humanitarian mission and organizational governance |
+
+---
+
 ## 📜 License
 
 This software is licensed under the **AOS Humanitarian License v1.0.1**.
@@ -260,7 +305,7 @@ This software is licensed under the **AOS Humanitarian License v1.0.1**.
 
 **You may not** use this software for weapons, military applications, surveillance, exploitation, or any purpose that causes measurable harm to human welfare.
 
-**Patent Notice:** This software is a standard API proxy. It does not implement any AOS-patented methods (Deterministic Policy Gate, AOS Attest, Constitutional Governance Framework, etc.). Use of this software does not grant rights under any AOS patents.
+**Patent Notice:** This software implements standard proxy and audit patterns. Advanced AOS-patented methods (Deterministic Policy Gate, AOS Attest, Constitutional Governance Framework) are documented in the [AOS Standard](https://aos-governance.com) and available under separate licensing terms.
 
 Full license text: [LICENSE](LICENSE)
 Full license details: https://aos-constitution.com
@@ -271,6 +316,7 @@ Full license details: https://aos-constitution.com
 
 Built by [Gene Salvatore](https://aos-governance.com) / AOS (Agentic Operating System)
 
-- Website: https://aos-governance.com
+- Standard: https://aos-governance.com
 - Constitution: https://aos-constitution.com
 - Patents: https://aos-patents.com
+- Contact: gene@aos-governance.com
