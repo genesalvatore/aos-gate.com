@@ -472,7 +472,9 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
     </div>
     <div class="sidebar-nav">
       <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}">Activity Log</a>
-      <a href="/rules" class="nav-item ${currentPath === '/rules' ? 'active' : ''}">Policy & Rules</a>
+      <a href="/stats" class="nav-item ${currentPath === '/stats' ? 'active' : ''}">Usage Stats</a>
+      <a href="/rules" class="nav-item ${currentPath === '/rules' ? 'active' : ''}">Policy &amp; Rules</a>
+      <a href="/export" class="nav-item ${currentPath === '/export' ? 'active' : ''}">Export Logs</a>
     </div>
     <div class="sidebar-footer">
       <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.5rem; text-align: center;">v${GATE_VERSION}</div>
@@ -506,26 +508,41 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
   </script>
 </body></html>`;
 
-dashboard.get('/', requireAuth, (_req, res) => {
-    // Read today's log
-    const date = new Date().toISOString().split('T')[0];
+// Helper: read entries for a given date string
+function readEntriesForDate(date) {
     const logFile = join(LOG_DIR, `gate-${date}.jsonl`);
-    let entries = [];
-    if (existsSync(logFile)) {
-        entries = readFileSync(logFile, 'utf-8')
-            .split('\\n')
-            .filter(Boolean)
-            .map(line => { try { return JSON.parse(line); } catch { return null; } })
-            .filter(Boolean);
-    }
+    if (!existsSync(logFile)) return [];
+    return readFileSync(logFile, 'utf-8')
+        .split('\n').filter(Boolean)
+        .map(line => { try { return JSON.parse(line); } catch { return null; } })
+        .filter(Boolean);
+}
+
+dashboard.get('/', requireAuth, (req, res) => {
+    const date = req.query.date || new Date().toISOString().split('T')[0];
+    const entries = readEntriesForDate(date);
 
     const passed = entries.filter(e => e.action === 'PASSED').length;
     const blocked = entries.filter(e => e.action === 'BLOCKED').length;
     const piiWarnings = entries.filter(e => e.action === 'PII_WARNING').length;
     const errors = entries.filter(e => e.action === 'ERROR').length;
 
+    // Calculate prev/next dates
+    const d = new Date(date + 'T12:00:00Z');
+    const prev = new Date(d); prev.setDate(prev.getDate() - 1);
+    const next = new Date(d); next.setDate(next.getDate() + 1);
+    const prevStr = prev.toISOString().split('T')[0];
+    const nextStr = next.toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    const isToday = date === today;
+
     const content = `
-      <div class="subtitle">Log File: gate-${date}.jsonl · ${entries.length} requests captured</div>
+      <div class="subtitle" style="display:flex; align-items:center; gap:1rem;">
+        <a href="/?date=${prevStr}" style="color:#888; text-decoration:none; font-size:1.2rem;">&larr;</a>
+        <span>Log File: gate-${date}.jsonl &middot; ${entries.length} requests captured</span>
+        ${!isToday ? `<a href="/?date=${nextStr}" style="color:#888; text-decoration:none; font-size:1.2rem;">&rarr;</a>` : ''}
+        ${!isToday ? `<a href="/" style="color:#555; text-decoration:none; font-size:0.75rem; border:1px solid #333; padding:0.2rem 0.5rem; border-radius:4px;">Today</a>` : ''}
+      </div>
       <div class="stats">
         <div class="stat passed"><div class="label">Passed</div><div class="value">${passed}</div></div>
         <div class="stat blocked"><div class="label">Blocked</div><div class="value">${blocked}</div></div>
@@ -533,26 +550,26 @@ dashboard.get('/', requireAuth, (_req, res) => {
         <div class="stat errors"><div class="label">Errors</div><div class="value">${errors}</div></div>
       </div>
       <div class="card">
-        <div class="card-header">Target Requests</div>
+        <div class="card-header">Audit Trail &mdash; ${date}</div>
         <table>
           <thead><tr><th>Time</th><th>Action</th><th>Provider</th><th>Model</th><th>Tokens (In/Out)</th><th>Duration</th><th>Notes</th></tr></thead>
           <tbody>
             ${entries.length > 0 ? entries.reverse().map(e => `<tr>
-              <td class="mono">${e.timestamp?.split('T')[1]?.substring(0,8) || '—'}</td>
+              <td class="mono">${e.timestamp?.split('T')[1]?.substring(0,8) || '\u2014'}</td>
               <td class="action-${(e.action||'').toLowerCase()}">${e.action}</td>
-              <td>${e.provider || '—'}</td>
-              <td class="mono">${e.model || '—'}</td>
-              <td class="mono">${e.inputTokens || '—'} / ${e.outputTokens || '—'}</td>
-              <td class="mono">${e.durationMs ? e.durationMs + 'ms' : '—'}</td>
+              <td>${e.provider || '\u2014'}</td>
+              <td class="mono">${e.model || '\u2014'}</td>
+              <td class="mono">${e.inputTokens || '\u2014'} / ${e.outputTokens || '\u2014'}</td>
+              <td class="mono">${e.durationMs ? e.durationMs + 'ms' : '\u2014'}</td>
               <td class="mono" style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '')}">
                 ${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '') || ''}
               </td>
-            </tr>`).join('') : `<tr><td colspan="7" style="text-align:center; padding: 2rem; color:#666;">No audit records found for today.</td></tr>`}
+            </tr>`).join('') : `<tr><td colspan="7" style="text-align:center; padding: 2rem; color:#666;">No audit records found for ${date}.</td></tr>`}
           </tbody>
         </table>
       </div>
     `;
-    res.send(renderLayout('Dashboard Audit Log', content, '/'));
+    res.send(renderLayout('Activity Log', content, '/'));
 });
 
 dashboard.get('/rules', requireAuth, (_req, res) => {
@@ -639,15 +656,144 @@ dashboard.post('/rules', requireAuth, (req, res) => {
     res.redirect('/rules?saved=1');
 });
 
+// ─── Usage Stats ────────────────────────────────────────────────────────────
+dashboard.get('/stats', requireAuth, (_req, res) => {
+    const files = readdirSync(LOG_DIR).filter(f => f.endsWith('.jsonl')).sort().reverse().slice(0, 14);
+    const days = [];
+    let maxTotal = 1;
+    for (const file of files.reverse()) {
+        const date = file.replace('gate-', '').replace('.jsonl', '');
+        const entries = readEntriesForDate(date);
+        const passed = entries.filter(e => e.action === 'PASSED').length;
+        const blocked = entries.filter(e => e.action === 'BLOCKED').length;
+        const pii = entries.filter(e => e.action === 'PII_WARNING').length;
+        const errs = entries.filter(e => e.action === 'ERROR').length;
+        const total = entries.length;
+        if (total > maxTotal) maxTotal = total;
+        days.push({ date, passed, blocked, pii, errors: errs, total });
+    }
+
+    const barWidth = 40;
+    const chartHeight = 200;
+    const chartWidth = Math.max(days.length * (barWidth + 10), 300);
+    const bars = days.map((d, i) => {
+        const x = i * (barWidth + 10) + 5;
+        const h = (d.total / maxTotal) * (chartHeight - 30);
+        const passedH = (d.passed / maxTotal) * (chartHeight - 30);
+        const blockedH = (d.blocked / maxTotal) * (chartHeight - 30);
+        const piiH = (d.pii / maxTotal) * (chartHeight - 30);
+        let y = chartHeight - h;
+        return `<rect x="${x}" y="${chartHeight - passedH}" width="${barWidth}" height="${passedH}" fill="#4ade80" rx="2"/>
+                <rect x="${x}" y="${chartHeight - passedH - blockedH}" width="${barWidth}" height="${blockedH}" fill="#f87171" rx="2"/>
+                <rect x="${x}" y="${chartHeight - passedH - blockedH - piiH}" width="${barWidth}" height="${piiH}" fill="#fbbf24" rx="2"/>
+                <text x="${x + barWidth/2}" y="${chartHeight + 14}" text-anchor="middle" fill="#666" font-size="10">${d.date.substring(5)}</text>
+                <text x="${x + barWidth/2}" y="${chartHeight - h - 4}" text-anchor="middle" fill="#888" font-size="10">${d.total}</text>`;
+    }).join('');
+
+    // Model breakdown
+    const allEntries = [];
+    for (const d of days) { allEntries.push(...readEntriesForDate(d.date)); }
+    const modelCounts = {};
+    for (const e of allEntries) { if (e.model) modelCounts[e.model] = (modelCounts[e.model] || 0) + 1; }
+    const modelRows = Object.entries(modelCounts).sort((a, b) => b[1] - a[1]);
+    const totalRequests = allEntries.length;
+
+    const content = `
+      <div class="subtitle">Last ${days.length} days &middot; ${totalRequests} total requests</div>
+      <div class="card">
+        <div class="card-header">Daily Request Volume</div>
+        <div class="card-body" style="overflow-x:auto;">
+          <svg width="${chartWidth}" height="${chartHeight + 20}" style="display:block;">
+            <line x1="0" y1="${chartHeight}" x2="${chartWidth}" y2="${chartHeight}" stroke="#333" stroke-width="1"/>
+            ${bars}
+          </svg>
+          <div style="display:flex; gap:1.5rem; margin-top:1rem; font-size:0.75rem;">
+            <span><span style="display:inline-block;width:10px;height:10px;background:#4ade80;border-radius:2px;"></span> Passed</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#f87171;border-radius:2px;"></span> Blocked</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#fbbf24;border-radius:2px;"></span> PII Warning</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Model Usage Breakdown</div>
+        <table>
+          <thead><tr><th>Model</th><th>Requests</th><th style="width:50%">Share</th></tr></thead>
+          <tbody>
+            ${modelRows.length > 0 ? modelRows.map(([model, count]) => {
+              const pct = ((count / totalRequests) * 100).toFixed(1);
+              return `<tr>
+                <td class="mono">${model}</td>
+                <td class="mono">${count}</td>
+                <td><div style="background:#222;border-radius:4px;overflow:hidden;"><div style="width:${pct}%;background:#4ade80;height:8px;"></div></div><span style="font-size:0.7rem;color:#666;">${pct}%</span></td>
+              </tr>`;
+            }).join('') : '<tr><td colspan="3" style="text-align:center; padding:2rem; color:#666;">No model data yet.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+    res.send(renderLayout('Usage Stats', content, '/stats'));
+});
+
+// ─── Export Logs ────────────────────────────────────────────────────────────
+dashboard.get('/export', requireAuth, (_req, res) => {
+    const files = readdirSync(LOG_DIR).filter(f => f.endsWith('.jsonl')).sort().reverse();
+    const fileRows = files.map(f => {
+        const date = f.replace('gate-', '').replace('.jsonl', '');
+        const entries = readEntriesForDate(date);
+        const size = existsSync(join(LOG_DIR, f)) ? readFileSync(join(LOG_DIR, f)).length : 0;
+        const sizeStr = size > 1024 ? (size / 1024).toFixed(1) + ' KB' : size + ' B';
+        return `<tr>
+            <td class="mono">${date}</td>
+            <td class="mono">${entries.length}</td>
+            <td class="mono">${sizeStr}</td>
+            <td>
+              <a href="/export/download?date=${date}&format=json" style="color:#4ade80; text-decoration:none; margin-right:1rem;">JSON</a>
+              <a href="/export/download?date=${date}&format=csv" style="color:#60a5fa; text-decoration:none;">CSV</a>
+            </td>
+        </tr>`;
+    }).join('');
+
+    const content = `
+      <div class="subtitle">Download audit logs for compliance and evidence preservation.</div>
+      <div class="card">
+        <div class="card-header">Available Log Files</div>
+        <table>
+          <thead><tr><th>Date</th><th>Entries</th><th>Size</th><th>Download</th></tr></thead>
+          <tbody>
+            ${fileRows || '<tr><td colspan="4" style="text-align:center; padding:2rem; color:#666;">No log files found.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+    res.send(renderLayout('Export Logs', content, '/export'));
+});
+
+dashboard.get('/export/download', requireAuth, (req, res) => {
+    const { date, format } = req.query;
+    if (!date) return res.status(400).send('Missing date parameter');
+    const entries = readEntriesForDate(date);
+
+    if (format === 'csv') {
+        const headers = 'timestamp,action,provider,model,inputTokens,outputTokens,durationMs,reason';
+        const rows = entries.map(e =>
+            [e.timestamp, e.action, e.provider, e.model, e.inputTokens, e.outputTokens, e.durationMs, (e.reason || '')].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',')
+        );
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="aos-gate-${date}.csv"`);
+        res.send(headers + '\n' + rows.join('\n'));
+    } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="aos-gate-${date}.json"`);
+        res.json({ date, version: GATE_VERSION, entries });
+    }
+});
+
 // API endpoint for log data
 dashboard.get('/api/logs', requireAuth, (_req, res) => {
     const files = readdirSync(LOG_DIR).filter(f => f.endsWith('.jsonl')).sort().reverse();
     const logs = {};
-    for (const file of files.slice(0, 7)) { // Last 7 days
-        const entries = readFileSync(join(LOG_DIR, file), 'utf-8')
-            .split('\n').filter(Boolean)
-            .map(l => { try { return JSON.parse(l); } catch { return null; } })
-            .filter(Boolean);
+    for (const file of files.slice(0, 7)) {
+        const entries = readEntriesForDate(file.replace('gate-', '').replace('.jsonl', ''));
         logs[file.replace('gate-', '').replace('.jsonl', '')] = entries;
     }
     res.json(logs);
