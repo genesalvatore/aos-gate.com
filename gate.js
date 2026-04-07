@@ -471,18 +471,18 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
       </div>
     </div>
     <div class="sidebar-nav">
-      <a href="/" class="nav-item \${currentPath === '/' ? 'active' : ''}">Activity Log</a>
-      <a href="/rules" class="nav-item \${currentPath === '/rules' ? 'active' : ''}">Policy & Rules</a>
+      <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}">Activity Log</a>
+      <a href="/rules" class="nav-item ${currentPath === '/rules' ? 'active' : ''}">Policy & Rules</a>
     </div>
     <div class="sidebar-footer">
-      <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.5rem; text-align: center;">v\${GATE_VERSION}</div>
+      <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.5rem; text-align: center;">v${GATE_VERSION}</div>
       <button onclick="checkUpdate()" id="update-btn" style="width: 100%; padding:0.5rem; margin-bottom:0.5rem; background:#111; color:#888; border:1px solid #333; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">Check for Updates</button>
       <a href="/logout" class="logout-btn">Sign Out</a>
     </div>
   </div>
   <div class="main-content">
-    <h2>\${title}</h2>
-    \${content}
+    <h2>${title}</h2>
+    ${content}
   </div>
   <script>
     function checkUpdate() {
@@ -504,12 +504,12 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
        });
     }
   </script>
-</body></html>\`;
+</body></html>`;
 
 dashboard.get('/', requireAuth, (_req, res) => {
     // Read today's log
     const date = new Date().toISOString().split('T')[0];
-    const logFile = join(LOG_DIR, \`gate-\${date}.jsonl\`);
+    const logFile = join(LOG_DIR, `gate-${date}.jsonl`);
     let entries = [];
     if (existsSync(logFile)) {
         entries = readFileSync(logFile, 'utf-8')
@@ -524,34 +524,34 @@ dashboard.get('/', requireAuth, (_req, res) => {
     const piiWarnings = entries.filter(e => e.action === 'PII_WARNING').length;
     const errors = entries.filter(e => e.action === 'ERROR').length;
 
-    const content = \`
-      <div class="subtitle">Log File: gate-\${date}.jsonl · \${entries.length} requests captured</div>
+    const content = `
+      <div class="subtitle">Log File: gate-${date}.jsonl · ${entries.length} requests captured</div>
       <div class="stats">
-        <div class="stat passed"><div class="label">Passed</div><div class="value">\${passed}</div></div>
-        <div class="stat blocked"><div class="label">Blocked</div><div class="value">\${blocked}</div></div>
-        <div class="stat pii"><div class="label">PII Warnings</div><div class="value">\${piiWarnings}</div></div>
-        <div class="stat errors"><div class="label">Errors</div><div class="value">\${errors}</div></div>
+        <div class="stat passed"><div class="label">Passed</div><div class="value">${passed}</div></div>
+        <div class="stat blocked"><div class="label">Blocked</div><div class="value">${blocked}</div></div>
+        <div class="stat pii"><div class="label">PII Warnings</div><div class="value">${piiWarnings}</div></div>
+        <div class="stat errors"><div class="label">Errors</div><div class="value">${errors}</div></div>
       </div>
       <div class="card">
         <div class="card-header">Target Requests</div>
         <table>
           <thead><tr><th>Time</th><th>Action</th><th>Provider</th><th>Model</th><th>Tokens (In/Out)</th><th>Duration</th><th>Notes</th></tr></thead>
           <tbody>
-            \${entries.length > 0 ? entries.reverse().map(e => \`<tr>
-              <td class="mono">\${e.timestamp?.split('T')[1]?.substring(0,8) || '—'}</td>
-              <td class="action-\${(e.action||'').toLowerCase()}">\${e.action}</td>
-              <td>\${e.provider || '—'}</td>
-              <td class="mono">\${e.model || '—'}</td>
-              <td class="mono">\${e.inputTokens || '—'} / \${e.outputTokens || '—'}</td>
-              <td class="mono">\${e.durationMs ? e.durationMs + 'ms' : '—'}</td>
-              <td class="mono" style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="\${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '')}">
-                \${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '') || ''}
+            ${entries.length > 0 ? entries.reverse().map(e => `<tr>
+              <td class="mono">${e.timestamp?.split('T')[1]?.substring(0,8) || '—'}</td>
+              <td class="action-${(e.action||'').toLowerCase()}">${e.action}</td>
+              <td>${e.provider || '—'}</td>
+              <td class="mono">${e.model || '—'}</td>
+              <td class="mono">${e.inputTokens || '—'} / ${e.outputTokens || '—'}</td>
+              <td class="mono">${e.durationMs ? e.durationMs + 'ms' : '—'}</td>
+              <td class="mono" style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '')}">
+                ${e.reason || (e.inputPII ? 'PII: ' + e.inputPII.map(p=>p.type).join(', ') : '') || (e.error || '') || ''}
               </td>
-            </tr>\`).join('') : \`<tr><td colspan="7" style="text-align:center; padding: 2rem; color:#666;">No audit records found for today.</td></tr>\`}
+            </tr>`).join('') : `<tr><td colspan="7" style="text-align:center; padding: 2rem; color:#666;">No audit records found for today.</td></tr>`}
           </tbody>
         </table>
       </div>
-    \`;
+    `;
     res.send(renderLayout('Dashboard Audit Log', content, '/'));
 });
 
@@ -563,12 +563,12 @@ dashboard.get('/rules', requireAuth, (_req, res) => {
 
     let messageHtml = '';
     if (_req.query.saved) {
-        messageHtml = \`<div style="background: #064e3b; color: #a7f3d0; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-weight: 600; border: 1px solid #047857;">✓ Policy updated securely. Changes applied to active memory immediately.</div>\`;
+        messageHtml = `<div style="background: #064e3b; color: #a7f3d0; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-weight: 600; border: 1px solid #047857;">✓ Policy updated securely. Changes applied to active memory immediately.</div>`;
     }
 
-    const content = \`
+    const content = `
       <div class="subtitle">Gate configuration applied at the proxy level. Edits are deterministic.</div>
-      \${messageHtml}
+      ${messageHtml}
       <form method="POST" action="/rules">
         <div class="card">
           <div class="card-header">General Rules</div>
@@ -576,13 +576,13 @@ dashboard.get('/rules', requireAuth, (_req, res) => {
             <div class="form-group">
               <label>Log Level</label>
               <select name="logLevel">
-                <option value="full" \${currentPolicy.logLevel === 'full' ? 'selected' : ''}>Full (Capture Prompt & Response Text)</option>
-                <option value="meta" \${currentPolicy.logLevel !== 'full' ? 'selected' : ''}>Meta Only (Capture Usage Stats, Mask Text)</option>
+                <option value="full" ${currentPolicy.logLevel === 'full' ? 'selected' : ''}>Full (Capture Prompt & Response Text)</option>
+                <option value="meta" ${currentPolicy.logLevel !== 'full' ? 'selected' : ''}>Meta Only (Capture Usage Stats, Mask Text)</option>
               </select>
             </div>
             <div class="form-group" style="margin-bottom:0;">
               <label>Allowed Models (One per line)</label>
-              <textarea name="allowedModels">\${(currentPolicy.allowedModels || []).join('\\n')}</textarea>
+              <textarea name="allowedModels">${(currentPolicy.allowedModels || []).join('\\n')}</textarea>
               <div style="font-size:0.75rem; color:#666; margin-top:0.5rem;">Leave empty to allow all requested models.</div>
             </div>
           </div>
@@ -592,14 +592,14 @@ dashboard.get('/rules', requireAuth, (_req, res) => {
           <div class="card-header">Content Block Rules (Regex)</div>
           <div class="card-body" style="padding-bottom:1rem;">
             <div id="patterns-container">
-              \${(currentPolicy.blockedPatterns || []).map(p => \`
+              ${(currentPolicy.blockedPatterns || []).map(p => `
                 <div class="pattern-row">
-                  <input type="text" name="patternLabel" value="\${p.label || ''}" placeholder="Label" required>
-                  <input type="text" name="patternRegex" value="\${p.pattern || ''}" placeholder="Regex" required>
-                  <input type="text" name="patternFlags" value="\${p.flags || 'gi'}" placeholder="Flags">
+                  <input type="text" name="patternLabel" value="${p.label || ''}" placeholder="Label" required>
+                  <input type="text" name="patternRegex" value="${p.pattern || ''}" placeholder="Regex" required>
+                  <input type="text" name="patternFlags" value="${p.flags || 'gi'}" placeholder="Flags">
                   <button type="button" class="btn-icon" onclick="this.parentElement.remove()">✕</button>
                 </div>
-              \`).join('')}
+              `).join('')}
             </div>
             <button type="button" class="btn-add" onclick="addPatternRow()">+ Add Block Rule</button>
           </div>
@@ -607,7 +607,7 @@ dashboard.get('/rules', requireAuth, (_req, res) => {
 
         <button type="submit" class="submit-btn" style="width:100%; max-width:250px;">Save Rules to Disk</button>
       </form>
-    \`;
+    `;
     res.send(renderLayout('Policy Settings', content, '/rules'));
 });
 
@@ -673,5 +673,5 @@ dashboard.get('/update', requireAuth, (req, res) => {
 });
 
 dashboard.listen(DASHBOARD_PORT, () => {
-    console.log(`📊 Dashboard: http://localhost:${DASHBOARD_PORT}`);
+    console.log(`[Dashboard] http://localhost:${DASHBOARD_PORT}`);
 });
