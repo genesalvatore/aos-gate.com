@@ -369,7 +369,7 @@ dashboard.post('/login', (req, res) => {
     if (req.body.password === ADMIN_PASSWORD) {
         const token = crypto.randomBytes(16).toString('hex');
         sessionTokens.add(token);
-        res.setHeader('Set-Cookie', \`aos_gate_session=\${token}; HttpOnly; Path=/; Max-Age=86400\`);
+        res.setHeader('Set-Cookie', `aos_gate_session=${token}; HttpOnly; Path=/; Max-Age=86400`);
         res.redirect('/');
     } else {
         res.redirect('/login');
@@ -378,7 +378,7 @@ dashboard.post('/login', (req, res) => {
 
 dashboard.get('/logout', (req, res) => {
     if (req.cookies.aos_gate_session) sessionTokens.delete(req.cookies.aos_gate_session);
-    res.setHeader('Set-Cookie', \`aos_gate_session=; HttpOnly; Path=/; Max-Age=0\`);
+    res.setHeader('Set-Cookie', `aos_gate_session=; HttpOnly; Path=/; Max-Age=0`);
     res.redirect('/login');
 });
 
