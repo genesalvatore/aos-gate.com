@@ -61,7 +61,12 @@ Open your web browser and go to:
 http://localhost:3101
 ```
 
-You should see the **AOS Gate Dashboard** — a dark screen showing "0 events". This is your audit log. It's empty because nothing has gone through the gate yet.
+You will be presented with the **Sovereign Admin** login screen. 
+> **Default Passphrase:** `aos-admin`
+
+*(You can change this by setting the `ADMIN_PASSWORD` variable in your environment or `docker-compose.yml`.)*
+
+Once logged in, you should see the **AOS Gate Dashboard** — a dark screen showing "0 events". This is your audit log. It's empty because nothing has gone through the gate yet.
 
 ### Step 4: Update Your N8N Nodes
 

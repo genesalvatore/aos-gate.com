@@ -11,6 +11,7 @@ services:
       - DASHBOARD_PORT=3101
       - LOG_DIR=/data/logs
       - POLICY_FILE=/app/policy.json
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-aos-admin}
     volumes:
       - aos-gate-logs:/data
       - ./policy.json:/app/policy.json:ro

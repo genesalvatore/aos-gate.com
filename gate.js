@@ -320,8 +320,69 @@ app.listen(GATE_PORT, () => {
 
 // ─── Audit Dashboard ────────────────────────────────────────────────────────
 const dashboard = express();
+import crypto from 'crypto';
 
-dashboard.get('/', (_req, res) => {
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'aos-admin';
+const sessionTokens = new Set();
+
+dashboard.use(express.urlencoded({ extended: true }));
+dashboard.use((req, res, next) => {
+    req.cookies = req.headers.cookie?.split(';').reduce((acc, item) => {
+        const data = item.trim().split('=');
+        return { ...acc, [data[0]]: data[1] };
+    }, {}) || {};
+    next();
+});
+
+const requireAuth = (req, res, next) => {
+    if (sessionTokens.has(req.cookies.aos_gate_session)) return next();
+    res.redirect('/login');
+};
+
+dashboard.get('/login', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html><head><title>AOS Gate — Sovereign Auth</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+  .login-box { background: #151515; padding: 2.5rem; border-radius: 12px; border: 1px solid #222; width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .title { font-size: 1.2rem; margin-top: 0; margin-bottom: 0.25rem; text-align: center; font-weight: 700; letter-spacing: -0.02em; }
+  .subtitle { font-size: 0.75rem; text-align: center; color: #666; margin-bottom: 2rem; font-family: monospace; text-transform: uppercase; letter-spacing: 0.1em; }
+  input { width: 100%; padding: 0.85rem; margin-bottom: 1rem; background: #0a0a0a; border: 1px solid #333; color: #fff; border-radius: 6px; font-family: monospace; transition: border-color 0.2s; }
+  input:focus { outline: none; border-color: #666; }
+  button { width: 100%; padding: 0.85rem; background: #fff; color: #000; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  button:hover { background: #e0e0e0; }
+</style></head>
+<body>
+  <div class="login-box">
+    <div class="title">AOS Gate</div>
+    <div class="subtitle">Sovereign Admin</div>
+    <form method="POST" action="/login">
+      <input type="password" name="password" placeholder="Passphrase" required autofocus/>
+      <button type="submit">Authenticate</button>
+    </form>
+  </div>
+</body></html>`);
+});
+
+dashboard.post('/login', (req, res) => {
+    if (req.body.password === ADMIN_PASSWORD) {
+        const token = crypto.randomBytes(16).toString('hex');
+        sessionTokens.add(token);
+        res.setHeader('Set-Cookie', \`aos_gate_session=\${token}; HttpOnly; Path=/; Max-Age=86400\`);
+        res.redirect('/');
+    } else {
+        res.redirect('/login');
+    }
+});
+
+dashboard.get('/logout', (req, res) => {
+    if (req.cookies.aos_gate_session) sessionTokens.delete(req.cookies.aos_gate_session);
+    res.setHeader('Set-Cookie', \`aos_gate_session=; HttpOnly; Path=/; Max-Age=0\`);
+    res.redirect('/login');
+});
+
+dashboard.get('/', requireAuth, (_req, res) => {
     // Read today's log
     const date = new Date().toISOString().split('T')[0];
     const logFile = join(LOG_DIR, `gate-${date}.jsonl`);
@@ -363,7 +424,10 @@ dashboard.get('/', (_req, res) => {
   .action-error { color: #f97316; }
   .mono { font-family: monospace; font-size: 0.75rem; color: #888; }
 </style></head><body>
-  <h1>🚪 AOS Gate — Audit Log</h1>
+  <h1 style="display: flex; justify-content: space-between; align-items: center;">
+    <span>🚪 AOS Gate — Audit Log</span>
+    <a href="/logout" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; background: #222; color: #fff; text-decoration: none; border-radius: 4px; font-weight: normal; border: 1px solid #333;">Sign Out</a>
+  </h1>
   <div class="subtitle">${date} · ${entries.length} events</div>
   <div class="stats">
     <div class="stat passed"><div class="label">Passed</div><div class="value">${passed}</div></div>
@@ -389,7 +453,7 @@ dashboard.get('/', (_req, res) => {
 });
 
 // API endpoint for log data
-dashboard.get('/api/logs', (_req, res) => {
+dashboard.get('/api/logs', requireAuth, (_req, res) => {
     const files = readdirSync(LOG_DIR).filter(f => f.endsWith('.jsonl')).sort().reverse();
     const logs = {};
     for (const file of files.slice(0, 7)) { // Last 7 days
