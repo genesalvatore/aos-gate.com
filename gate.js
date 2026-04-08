@@ -528,6 +528,7 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
       <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}">Activity Log</a>
       <a href="/stats" class="nav-item ${currentPath === '/stats' ? 'active' : ''}">Usage Stats</a>
       <a href="/rules" class="nav-item ${currentPath === '/rules' ? 'active' : ''}">Policy &amp; Rules</a>
+      <a href="/how-it-works" class="nav-item ${currentPath === '/how-it-works' ? 'active' : ''}">How It Works</a>
       <a href="/export" class="nav-item ${currentPath === '/export' ? 'active' : ''}">Export Logs</a>
       <a href="/docs" class="nav-item ${currentPath === '/docs' ? 'active' : ''}">Documentation</a>
     </div>
@@ -908,6 +909,49 @@ dashboard.get('/docs', requireAuth, (_req, res) => {
       </div>
     `;
     res.send(renderLayout('Documentation', content, '/docs'));
+});
+
+dashboard.get('/how-it-works', requireAuth, (_req, res) => {
+    const content = `
+      <div class="subtitle">Understanding the deterministic containment barrier.</div>
+
+      <div class="card">
+        <div class="card-header" style="color: var(--accent); font-weight: 800;">1. The "Physical" Bottleneck (It Blocks)</div>
+        <div class="card-body">
+          <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.6; margin-bottom:0;">
+            AOS Gate is not an API wrapped in promises—it is a physical network bottleneck running locally within your infrastructure. The proxy sits <em>before</em> the outbound HTTP request ever leaves the server. If the payload fails a configured regex policy, the outbound request is instantly aborted. The upstream API is never called, and a hard <code>403 Forbidden</code> is returned back to the agent or script. The packet dies on your hardware before it ever reaches San Francisco.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="color: var(--accent); font-weight: 800;">2. Absolute Auditability (It Logs &amp; Records)</div>
+        <div class="card-body">
+          <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.6; margin-bottom:0;">
+            AOS Gate guarantees forensic transparency by writing immortal, line-delimited <code>.jsonl</code> files per day locally into the <code>/logs</code> directory. Every request captures the precise timestamp, the provider (Anthropic/OpenAI), the exact model version requested, latency duration, tokens burned, and most importantly, the literal native prompt that was transmitted.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="color: var(--accent); font-weight: 800;">3. Instant Incident Analysis (It Highlights)</div>
+        <div class="card-body">
+          <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.6; margin-bottom:0;">
+            The Activity Log native UI parses the raw records to provide instantaneous incident analysis. It inherently highlights allowed payloads in green and blocked violations in hardened red. If an egress attempt is blocked, the interface surfaces exactly <em>why</em> it failed (e.g., <code>Rule Violation: [Internal Pricing]</code>), instantly mapping the halted packet back to the enforcement policy.
+          </p>
+        </div>
+      </div>
+
+      <div class="card" style="box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1); border-color: var(--accent);">
+        <div class="card-body" style="background: var(--bg-main);">
+          <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.5rem; font-weight: 800;">From Experimental to Institutional</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; margin-bottom:0;">
+            By open-sourcing the Gate as an easy-to-deploy Docker image, we provide a turnkey solution for developers struggling with unpredictable, "vibe-coded" agents. AOS Gate shifts the paradigm from probabilistic guardrails to deterministic, audited enforcement—because that is the prerequisite for deploying autonomous AI in production environments.
+          </p>
+        </div>
+      </div>
+    `;
+    res.send(renderLayout('How It Works', content, '/how-it-works'));
 });
 
 dashboard.get('/update', requireAuth, (req, res) => {
