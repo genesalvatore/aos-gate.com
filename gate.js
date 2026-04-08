@@ -834,6 +834,23 @@ dashboard.get('/docs', requireAuth, (_req, res) => {
             </ul>
         </div>
       </div>
+      
+      <div class="card">
+        <div class="card-header">Troubleshooting & Common Pitfalls</div>
+        <div class="card-body">
+            <h3 style="margin-bottom:0.5rem; color:#fff; font-size: 1rem;">1. "ENOTFOUND" or Connection Refused</h3>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:1.5rem; line-height:1.5;">If your automation tool runs in Docker, it lives on its own isolated network. By changing the URL to <code>http://aos-gate:3100</code>, you're asking it to find AOS Gate on that network. <strong>Fix:</strong> You must add the <code>aos-gate_default</code> network to your N8N <code>docker-compose.yml</code> file. (See the Github README for exactly what to copy/paste).</p>
+            
+            <h3 style="margin-bottom:0.5rem; color:#fff; font-size: 1rem;">2. API Key / "Unauthorized" Errors</h3>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:1.5rem; line-height:1.5;">AOS Gate does NOT store or manage your API keys. It expects the upstream HTTP node to include them exactly as Anthropic or OpenAI requires (e.g. <code>x-api-key</code> or <code>Authorization: Bearer ...</code>). <strong>Fix:</strong> Leave your credentials inside N8N entirely alone. AOS Gate seamlessly forwards these headers.</p>
+            
+            <h3 style="margin-bottom:0.5rem; color:#fff; font-size: 1rem;">3. Dashboard UI says "Saved" but Policy Resets</h3>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:1.5rem; line-height:1.5;">This happens if your <code>docker-compose.yml</code> previously mounted <code>policy.json</code> as Read-Only. <strong>Fix:</strong> Ensure your volume mapping looks like <code>- ./policy.json:/app/policy.json</code> (without the <code>:ro</code> flag at the end).</p>
+            
+            <h3 style="margin-bottom:0.5rem; color:#fff; font-size: 1rem;">4. "Unsupported Model" / 403 Forbidden</h3>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:0; line-height:1.5;">If you are receiving 403s but never configured Regex rules, you likely enabled <strong>Model Allowlisting</strong> but forgot to add the exact subversion (e.g. you allowed <code>gpt-4o</code> but your script requested <code>gpt-4o-2024-05-13</code>). <strong>Fix:</strong> Check the Activity Log to see the exact model string being requested, and add it to your allowlist.</p>
+        </div>
+      </div>
     `;
     res.send(renderLayout('Documentation', content, '/docs'));
 });
