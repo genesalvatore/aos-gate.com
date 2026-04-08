@@ -348,19 +348,19 @@ dashboard.get('/login', (req, res) => {
 <html><head><title>AOS Gate — Sovereign Auth</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-  .login-box { background: #151515; padding: 2.5rem; border-radius: 12px; border: 1px solid #222; width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-  .title { font-size: 1.2rem; margin-top: 0; margin-bottom: 0.25rem; text-align: center; font-weight: 700; letter-spacing: -0.02em; }
-  .subtitle { font-size: 0.75rem; text-align: center; color: #666; margin-bottom: 2rem; font-family: monospace; text-transform: uppercase; letter-spacing: 0.1em; }
-  input { width: 100%; padding: 0.85rem; margin-bottom: 1rem; background: #0a0a0a; border: 1px solid #333; color: #fff; border-radius: 6px; font-family: monospace; transition: border-color 0.2s; }
-  input:focus { outline: none; border-color: #666; }
-  button { width: 100%; padding: 0.85rem; background: #fff; color: #000; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  button:hover { background: #e0e0e0; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; color: #0f172a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+  .login-box { background: #ffffff; padding: 3rem; border-radius: 12px; border: 1px solid #e2e8f0; width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+  .title { font-size: 1.4rem; margin-top: 0; margin-bottom: 0.25rem; text-align: center; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; }
+  .subtitle { font-size: 0.8rem; text-align: center; color: #64748b; margin-bottom: 2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+  input { width: 100%; padding: 0.85rem; margin-bottom: 1.25rem; background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, monospace; transition: border-color 0.2s; font-size: 0.95rem; }
+  input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+  button { width: 100%; padding: 0.95rem; background: #3b82f6; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); }
+  button:hover { background: #2563eb; }
 </style></head>
 <body>
   <div class="login-box">
-    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem;">
-      <svg style="width: 48px; height: 48px; color: #fff; margin-bottom: 1rem;" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem;">
+      <svg style="width: 54px; height: 54px; color: #3b82f6; margin-bottom: 1.5rem;" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <polygon points="50,20 80,40 50,100" fill="none" stroke="currentColor" stroke-width="8"/>
         <polygon points="50,40 70,55 50,80" fill="currentColor" />
         <line x1="35" y1="10" x2="35" y2="90" stroke="currentColor" stroke-width="12" />
@@ -398,51 +398,52 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
 <html><head><title>AOS Gate — ${title}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; display: flex; min-height: 100vh; }
-  .sidebar { width: 250px; background: #151515; border-right: 1px solid #222; display: flex; flex-direction: column; flex-shrink: 0; }
-  .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #222; }
-  .sidebar-title { font-weight: 700; font-size: 1.25rem; color: #fff; letter-spacing: -0.02em; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; color: #0f172a; display: flex; min-height: 100vh; }
+  .sidebar { width: 250px; background: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 1px 0 15px rgba(0,0,0,0.03); }
+  .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #e2e8f0; }
+  .sidebar-title { font-weight: 800; font-size: 1.25rem; color: #0f172a; letter-spacing: -0.02em; }
   .sidebar-nav { flex: 1; padding: 1.5rem 0; }
-  .nav-item { display: block; padding: 0.75rem 1.5rem; color: #888; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
-  .nav-item:hover { color: #fff; background: #222; }
-  .nav-item.active { color: #fff; border-left: 3px solid #fff; background: #222; }
-  .sidebar-footer { padding: 1.5rem; border-top: 1px solid #222; }
-  .logout-btn { display: block; width: 100%; text-align: center; padding: 0.5rem; background: transparent; color: #888; text-decoration: none; border: 1px solid #333; border-radius: 4px; font-size: 0.8rem; transition: all 0.2s; }
-  .logout-btn:hover { color: #fff; border-color: #666; }
-  .main-content { flex: 1; padding: 2.5rem 3rem; overflow-y: auto; background: #0a0a0a; }
-  h2 { font-size: 1.5rem; margin-bottom: 0.25rem; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 2rem; font-family: monospace; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
-  .stat { background: #151515; border: 1px solid #222; border-radius: 8px; padding: 1.25rem; }
-  .stat .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #666; }
-  .stat .value { font-size: 2rem; font-weight: 700; margin-top: 0.25rem; }
-  .passed .value { color: #4ade80; }
-  .blocked .value { color: #f87171; }
-  .pii .value { color: #fbbf24; }
+  .nav-item { display: block; padding: 0.75rem 1.5rem; color: #64748b; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; border-left: 3px solid transparent; }
+  .nav-item:hover { color: #0f172a; background: #f1f5f9; }
+  .nav-item.active { color: #3b82f6; border-left: 3px solid #3b82f6; background: #eff6ff; }
+  .sidebar-footer { padding: 1.5rem; border-top: 1px solid #e2e8f0; }
+  .logout-btn { display: block; width: 100%; text-align: center; padding: 0.6rem; background: #f1f5f9; color: #475569; text-decoration: none; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .logout-btn:hover { color: #0f172a; border-color: #94a3b8; background: #e2e8f0; }
+  .main-content { flex: 1; padding: 2.5rem 3rem; overflow-y: auto; background: #f8fafc; }
+  h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 0.5rem; color: #0f172a; display: flex; justify-content: space-between; align-items: center; letter-spacing: -0.02em; }
+  .subtitle { color: #64748b; font-size: 0.9rem; margin-bottom: 2.5rem; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+  .stat { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+  .stat .label { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; color: #64748b; }
+  .stat .value { font-size: 2.2rem; font-weight: 800; margin-top: 0.5rem; color: #0f172a; }
+  .passed .value { color: #22c55e; }
+  .blocked .value { color: #ef4444; }
+  .pii .value { color: #f59e0b; }
   .errors .value { color: #f97316; }
-  .card { background: #151515; border: 1px solid #222; border-radius: 8px; margin-bottom: 2rem; overflow: hidden; }
-  .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid #222; font-weight: 600; font-size: 0.9rem; background: #111; color: #ddd; }
+  .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 2.5rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+  .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 1rem; background: #f8fafc; color: #0f172a; }
   .card-body { padding: 1.5rem; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th { text-align: left; padding: 0.75rem 1.5rem; color: #666; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.1em; border-bottom: 1px solid #222; background: #111; }
-  td { padding: 0.75rem 1.5rem; border-bottom: 1px solid #151515; }
-  .mono { font-family: monospace; font-size: 0.8rem; color: #888; }
-  .action-passed { color: #4ade80; }
-  .action-blocked { color: #f87171; font-weight: 600; }
-  .action-pii_warning { color: #fbbf24; }
-  .action-error { color: #f97316; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th { text-align: left; padding: 1rem 1.5rem; color: #64748b; text-transform: uppercase; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; background: #f8fafc; }
+  td { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; color: #475569; }
+  .action-passed { color: #22c55e; font-weight: 600; }
+  .action-blocked { color: #ef4444; font-weight: 700; }
+  .action-pii_warning { color: #f59e0b; font-weight: 600; }
+  .action-error { color: #f97316; font-weight: 600; }
   /* Forms */
   .form-group { margin-bottom: 1.5rem; }
-  label { display: block; font-size: 0.75rem; font-weight: 600; color: #999; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  textarea, input[type="text"], select { width: 100%; padding: 0.75rem; background: #0a0a0a; border: 1px solid #333; color: #e0e0e0; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
-  textarea { min-height: 100px; resize: vertical; }
-  button.submit-btn { padding: 0.75rem 1.5rem; background: #fff; color: #000; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  button.submit-btn:hover { background: #ccc; }
-  .pattern-row { display: grid; grid-template-columns: 1fr 2fr 80px 40px; gap: 0.75rem; margin-bottom: 0.75rem; align-items: start; }
-  .btn-icon { background: #222; color: #fff; border: 1px solid #333; padding: 0.5rem; border-radius: 4px; cursor: pointer; text-align: center; }
-  .btn-icon:hover { background: #333; }
-  .btn-add { background: #151515; color: #fff; border: 1px dashed #333; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.8rem; border-radius: 4px; display: inline-block; margin-top: 0.5rem; }
-  .btn-add:hover { border-color: #666; }
+  label { display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem; }
+  textarea, input[type="text"], select { width: 100%; padding: 0.85rem; background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; font-size: 0.9rem; transition: border-color 0.2s; }
+  textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+  textarea { min-height: 120px; resize: vertical; font-family: ui-monospace, SFMono-Regular, monospace; }
+  button.submit-btn { padding: 0.85rem 2rem; background: #3b82f6; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); }
+  button.submit-btn:hover { background: #2563eb; }
+  .pattern-row { display: grid; grid-template-columns: 1fr 2fr 80px 40px; gap: 0.75rem; margin-bottom: 1rem; align-items: start; }
+  .btn-icon { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 0.6rem; border-radius: 6px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .btn-icon:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+  .btn-add { background: #f8fafc; color: #3b82f6; border: 2px dashed #93c5fd; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 600; border-radius: 6px; display: inline-block; margin-top: 0.5rem; transition: all 0.2s; }
+  .btn-add:hover { background: #eff6ff; border-color: #3b82f6; }
 </style>
 <script>
   function addPatternRow() {
@@ -460,14 +461,14 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
 </head><body>
   <div class="sidebar">
     <div class="sidebar-header" style="display: flex; align-items: center; gap: 1rem;">
-      <svg style="width: 32px; height: 32px; color: #fff; flex-shrink: 0;" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <svg style="width: 32px; height: 32px; color: #3b82f6; flex-shrink: 0;" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <polygon points="50,20 80,40 50,100" fill="none" stroke="currentColor" stroke-width="8"/>
         <polygon points="50,40 70,55 50,80" fill="currentColor" />
         <line x1="35" y1="10" x2="35" y2="90" stroke="currentColor" stroke-width="12" />
       </svg>
       <div>
         <div class="sidebar-title">AOS Gate</div>
-        <div style="font-size: 0.7rem; color:#666; margin-top:2px;">Sovereign Control</div>
+        <div style="font-size: 0.75rem; color:#64748b; margin-top:2px;">Sovereign Control</div>
       </div>
     </div>
     <div class="sidebar-nav">
@@ -478,8 +479,8 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
       <a href="/docs" class="nav-item ${currentPath === '/docs' ? 'active' : ''}">Documentation</a>
     </div>
     <div class="sidebar-footer">
-      <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.5rem; text-align: center;">v${GATE_VERSION}</div>
-      <button onclick="checkUpdate()" id="update-btn" style="width: 100%; padding:0.5rem; margin-bottom:0.5rem; background:#111; color:#888; border:1px solid #333; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;">Check for Updates</button>
+      <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.75rem; text-align: center;">v${GATE_VERSION}</div>
+      <button onclick="checkUpdate()" id="update-btn" style="width: 100%; padding:0.6rem; margin-bottom:0.75rem; background:#f8fafc; color:#3b82f6; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s;">Check for Updates</button>
       <a href="/logout" class="logout-btn">Sign Out</a>
     </div>
   </div>
