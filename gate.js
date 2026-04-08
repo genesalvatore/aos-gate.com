@@ -173,6 +173,22 @@ app.post('/v1/messages', async (req, res) => {
             .map(c => c.text || '')
             .join('\n');
 
+        // Check for Intent/Tool blocking on the Response Body (Downstream Intercept)
+        const responseString = JSON.stringify(responseBody);
+        const blockedResponseContent = scanForBlockedContent(responseString);
+
+        if (blockedResponseContent.length > 0) {
+            const entry = {
+                timestamp: new Date().toISOString(),
+                provider: 'anthropic',
+                action: 'INTENT_BLOCKED',
+                reason: `Tool/Intent policy violation: ${blockedResponseContent.join(', ')}`,
+                model: requestBody.model,
+            };
+            logEntry(entry);
+            return res.status(403).json({ error: 'Tool/Intent blocked by policy', gate: entry });
+        }
+
         // Scan response for PII too
         const responsePII = scanForPII(responseText);
 
@@ -278,6 +294,22 @@ app.post('/v1/chat/completions', async (req, res) => {
         const responseText = (responseBody.choices || [])
             .map(c => c.message?.content || '')
             .join('\n');
+
+        // Check for Intent/Tool blocking on the Response Body (Downstream Intercept)
+        const responseString = JSON.stringify(responseBody);
+        const blockedResponseContent = scanForBlockedContent(responseString);
+
+        if (blockedResponseContent.length > 0) {
+            const entry = {
+                timestamp: new Date().toISOString(),
+                provider: 'openai',
+                action: 'INTENT_BLOCKED',
+                reason: `Tool/Intent policy violation: ${blockedResponseContent.join(', ')}`,
+                model: requestBody.model,
+            };
+            logEntry(entry);
+            return res.status(403).json({ error: 'Tool/Intent blocked by policy', gate: entry });
+        }
 
         const responsePII = scanForPII(responseText);
 
@@ -473,6 +505,7 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; color: var(--text-muted); }
   .action-passed { color: #22c55e; font-weight: 600; }
   .action-blocked { color: #ef4444; font-weight: 700; }
+  .action-intent_blocked { color: #ef4444; font-weight: 800; background: rgba(239, 68, 68, 0.1); padding: 2px 4px; border-radius: 4px; border: 1px solid #ef4444; }
   .action-pii_warning { color: #f59e0b; font-weight: 600; }
   .action-error { color: #f97316; font-weight: 600; }
   /* Forms */
@@ -584,7 +617,7 @@ dashboard.get('/', requireAuth, (req, res) => {
     const entries = readEntriesForDate(date);
 
     const passed = entries.filter(e => e.action === 'PASSED').length;
-    const blocked = entries.filter(e => e.action === 'BLOCKED').length;
+    const blocked = entries.filter(e => e.action === 'BLOCKED' || e.action === 'INTENT_BLOCKED').length;
     const piiWarnings = entries.filter(e => e.action === 'PII_WARNING').length;
     const errors = entries.filter(e => e.action === 'ERROR').length;
 
@@ -726,7 +759,7 @@ dashboard.get('/stats', requireAuth, (_req, res) => {
         const date = file.replace('gate-', '').replace('.jsonl', '');
         const entries = readEntriesForDate(date);
         const passed = entries.filter(e => e.action === 'PASSED').length;
-        const blocked = entries.filter(e => e.action === 'BLOCKED').length;
+        const blocked = entries.filter(e => e.action === 'BLOCKED' || e.action === 'INTENT_BLOCKED').length;
         const pii = entries.filter(e => e.action === 'PII_WARNING').length;
         const errs = entries.filter(e => e.action === 'ERROR').length;
         const total = entries.length;

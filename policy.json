@@ -9,6 +9,26 @@
     ],
     "blockedPatterns": [
         {
+            "label": "AWS S3 Destructive Intent (Delete)",
+            "pattern": "s3[_:-]?delete",
+            "flags": "gi"
+        },
+        {
+            "label": "AWS S3 Destructive Intent (Put/Write)",
+            "pattern": "s3[_:-]?put",
+            "flags": "gi"
+        },
+        {
+            "label": "Stripe Destructive Intent (Delete/Cancel)",
+            "pattern": "stripe[_:-]?(delete|cancel)",
+            "flags": "gi"
+        },
+        {
+            "label": "SQL Drop/Delete Injection",
+            "pattern": "DROP\\s+(TABLE|DATABASE)|DELETE\\s+FROM",
+            "flags": "gi"
+        },
+        {
             "label": "Internal pricing",
             "pattern": "(?:internal|confidential)\\s+(?:pricing|rate|margin)",
             "flags": "gi"
