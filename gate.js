@@ -445,18 +445,18 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
     --input-border: #333333;
     --table-border: #1a1a1a;
   }
-  body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; min-height: 100vh; transition: background 0.2s; }
-  .sidebar { width: 250px; background: var(--bg-sidebar); border-right: 1px solid var(--border-sidebar); display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 1px 0 15px rgba(0,0,0,0.03); transition: background 0.2s; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background 0.2s; }
+  .sidebar { width: 250px; background: var(--bg-sidebar); border-right: 1px solid var(--border-sidebar); display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 1px 0 15px rgba(0,0,0,0.03); transition: background 0.2s; height: 100vh; overflow-y: auto; }
   .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-sidebar); }
   .sidebar-title { font-weight: 800; font-size: 1.25rem; color: var(--text-sidebar-title); letter-spacing: -0.02em; }
-  .sidebar-nav { flex: 1; padding: 1.5rem 0; }
+  .sidebar-nav { flex: 1; padding: 1.5rem 0; overflow-y: auto; }
   .nav-item { display: block; padding: 0.75rem 1.5rem; color: var(--text-sidebar); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; border-left: 3px solid transparent; }
   .nav-item:hover { color: var(--text-sidebar-hover); background: var(--sidebar-active-bg); }
   .nav-item.active { color: #ffffff; border-left: 3px solid var(--accent); background: var(--sidebar-active-bg); }
   .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-sidebar); }
   .logout-btn { display: block; width: 100%; text-align: center; padding: 0.6rem; background: transparent; color: var(--text-sidebar); text-decoration: none; border: 1px dotted var(--border-sidebar); border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
   .logout-btn:hover { color: var(--text-sidebar-hover); border-style: solid; border-color: var(--text-sidebar); }
-  .main-content { flex: 1; padding: 2.5rem 3rem; overflow-y: auto; background: var(--bg-main); }
+  .main-content { flex: 1; padding: 2.5rem 3rem; overflow-y: auto; height: 100vh; background: var(--bg-main); }
   h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; letter-spacing: -0.02em; }
   .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2.5rem; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
