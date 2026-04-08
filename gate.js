@@ -348,15 +348,26 @@ dashboard.get('/login', (req, res) => {
 <html><head><title>AOS Gate — Sovereign Auth</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; color: #0f172a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-  .login-box { background: #ffffff; padding: 3rem; border-radius: 12px; border: 1px solid #e2e8f0; width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-  .title { font-size: 1.4rem; margin-top: 0; margin-bottom: 0.25rem; text-align: center; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; }
-  .subtitle { font-size: 0.8rem; text-align: center; color: #64748b; margin-bottom: 2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
-  input { width: 100%; padding: 0.85rem; margin-bottom: 1.25rem; background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, monospace; transition: border-color 0.2s; font-size: 0.95rem; }
-  input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-  button { width: 100%; padding: 0.95rem; background: #3b82f6; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); }
-  button:hover { background: #2563eb; }
-</style></head>
+  :root {
+    --bg-main: #f8fafc; --bg-card: #ffffff; --border-color: #e2e8f0; --text-main: #0f172a; --text-muted: #64748b; --input-bg: #f8fafc; --input-border: #cbd5e1; --accent: #3b82f6; --accent-hover: #2563eb;
+  }
+  [data-theme='dark'] {
+    --bg-main: #0a0a0a; --bg-card: #151515; --border-color: #222222; --text-main: #e0e0e0; --text-muted: #888888; --input-bg: #0a0a0a; --input-border: #333333;
+  }
+  body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+  .login-box { background: var(--bg-card); padding: 3rem; border-radius: 12px; border: 1px solid var(--border-color); width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+  .title { font-size: 1.4rem; margin-top: 0; margin-bottom: 0.25rem; text-align: center; font-weight: 800; letter-spacing: -0.02em; color: var(--text-main); }
+  .subtitle { font-size: 0.8rem; text-align: center; color: var(--text-muted); margin-bottom: 2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+  input { width: 100%; padding: 0.85rem; margin-bottom: 1.25rem; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: 6px; font-family: ui-monospace, SFMono-Regular, monospace; transition: border-color 0.2s; font-size: 0.95rem; }
+  input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+  button { width: 100%; padding: 0.95rem; background: var(--accent); color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); }
+  button:hover { background: var(--accent-hover); }
+</style>
+<script>
+  const saved = localStorage.getItem('aos-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', saved);
+</script>
+</head>
 <body>
   <div class="login-box">
     <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem;">
@@ -398,52 +409,88 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
 <html><head><title>AOS Gate — ${title}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; color: #0f172a; display: flex; min-height: 100vh; }
-  .sidebar { width: 250px; background: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 1px 0 15px rgba(0,0,0,0.03); }
-  .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #e2e8f0; }
-  .sidebar-title { font-weight: 800; font-size: 1.25rem; color: #0f172a; letter-spacing: -0.02em; }
+  :root {
+    --bg-main: #f8fafc;
+    --bg-sidebar: #0f172a;
+    --border-color: #e2e8f0;
+    --border-sidebar: #1e293b;
+    --text-main: #0f172a;
+    --text-sidebar: #94a3b8;
+    --text-sidebar-hover: #ffffff;
+    --text-sidebar-title: #ffffff;
+    --sidebar-active-bg: #1e293b;
+    --card-bg: #ffffff;
+    --card-header-bg: #f1f5f9;
+    --text-muted: #64748b;
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --table-border: #f1f5f9;
+  }
+  [data-theme='dark'] {
+    --bg-main: #0a0a0a;
+    --bg-sidebar: #151515;
+    --border-color: #222222;
+    --border-sidebar: #222222;
+    --text-main: #e0e0e0;
+    --text-sidebar: #888888;
+    --text-sidebar-hover: #ffffff;
+    --text-sidebar-title: #ffffff;
+    --sidebar-active-bg: #222222;
+    --card-bg: #151515;
+    --card-header-bg: #111111;
+    --text-muted: #888888;
+    --input-bg: #0a0a0a;
+    --input-border: #333333;
+    --table-border: #1a1a1a;
+  }
+  body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; min-height: 100vh; transition: background 0.2s; }
+  .sidebar { width: 250px; background: var(--bg-sidebar); border-right: 1px solid var(--border-sidebar); display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 1px 0 15px rgba(0,0,0,0.03); transition: background 0.2s; }
+  .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-sidebar); }
+  .sidebar-title { font-weight: 800; font-size: 1.25rem; color: var(--text-sidebar-title); letter-spacing: -0.02em; }
   .sidebar-nav { flex: 1; padding: 1.5rem 0; }
-  .nav-item { display: block; padding: 0.75rem 1.5rem; color: #64748b; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; border-left: 3px solid transparent; }
-  .nav-item:hover { color: #0f172a; background: #f1f5f9; }
-  .nav-item.active { color: #3b82f6; border-left: 3px solid #3b82f6; background: #eff6ff; }
-  .sidebar-footer { padding: 1.5rem; border-top: 1px solid #e2e8f0; }
-  .logout-btn { display: block; width: 100%; text-align: center; padding: 0.6rem; background: #f1f5f9; color: #475569; text-decoration: none; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
-  .logout-btn:hover { color: #0f172a; border-color: #94a3b8; background: #e2e8f0; }
-  .main-content { flex: 1; padding: 2.5rem 3rem; overflow-y: auto; background: #f8fafc; }
-  h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 0.5rem; color: #0f172a; display: flex; justify-content: space-between; align-items: center; letter-spacing: -0.02em; }
-  .subtitle { color: #64748b; font-size: 0.9rem; margin-bottom: 2.5rem; }
+  .nav-item { display: block; padding: 0.75rem 1.5rem; color: var(--text-sidebar); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; border-left: 3px solid transparent; }
+  .nav-item:hover { color: var(--text-sidebar-hover); background: var(--sidebar-active-bg); }
+  .nav-item.active { color: #ffffff; border-left: 3px solid var(--accent); background: var(--sidebar-active-bg); }
+  .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-sidebar); }
+  .logout-btn { display: block; width: 100%; text-align: center; padding: 0.6rem; background: transparent; color: var(--text-sidebar); text-decoration: none; border: 1px dotted var(--border-sidebar); border-radius: 6px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .logout-btn:hover { color: var(--text-sidebar-hover); border-style: solid; border-color: var(--text-sidebar); }
+  .main-content { flex: 1; padding: 2.5rem 3rem; overflow-y: auto; background: var(--bg-main); }
+  h2 { font-size: 1.7rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; letter-spacing: -0.02em; }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2.5rem; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
-  .stat { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-  .stat .label { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; color: #64748b; }
-  .stat .value { font-size: 2.2rem; font-weight: 800; margin-top: 0.5rem; color: #0f172a; }
+  .stat { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+  .stat .label { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; color: var(--text-muted); }
+  .stat .value { font-size: 2.2rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main); }
   .passed .value { color: #22c55e; }
   .blocked .value { color: #ef4444; }
   .pii .value { color: #f59e0b; }
   .errors .value { color: #f97316; }
-  .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 2.5rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-  .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 1rem; background: #f8fafc; color: #0f172a; }
+  .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 2.5rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+  .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 1rem; background: var(--card-header-bg); color: var(--text-main); }
   .card-body { padding: 1.5rem; }
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-  th { text-align: left; padding: 1rem 1.5rem; color: #64748b; text-transform: uppercase; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; background: #f8fafc; }
-  td { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; color: #475569; }
+  th { text-align: left; padding: 1rem 1.5rem; color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); background: var(--card-header-bg); }
+  td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--table-border); color: var(--text-main); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; color: var(--text-muted); }
   .action-passed { color: #22c55e; font-weight: 600; }
   .action-blocked { color: #ef4444; font-weight: 700; }
   .action-pii_warning { color: #f59e0b; font-weight: 600; }
   .action-error { color: #f97316; font-weight: 600; }
   /* Forms */
   .form-group { margin-bottom: 1.5rem; }
-  label { display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem; }
-  textarea, input[type="text"], select { width: 100%; padding: 0.85rem; background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; font-size: 0.9rem; transition: border-color 0.2s; }
-  textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+  label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; }
+  textarea, input[type="text"], select { width: 100%; padding: 0.85rem; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: 6px; font-size: 0.9rem; transition: border-color 0.2s; }
+  textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
   textarea { min-height: 120px; resize: vertical; font-family: ui-monospace, SFMono-Regular, monospace; }
-  button.submit-btn { padding: 0.85rem 2rem; background: #3b82f6; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); }
-  button.submit-btn:hover { background: #2563eb; }
+  button.submit-btn { padding: 0.85rem 2rem; background: var(--accent); color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); }
+  button.submit-btn:hover { background: var(--accent-hover); }
   .pattern-row { display: grid; grid-template-columns: 1fr 2fr 80px 40px; gap: 0.75rem; margin-bottom: 1rem; align-items: start; }
-  .btn-icon { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 0.6rem; border-radius: 6px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .btn-icon { background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--input-border); padding: 0.6rem; border-radius: 6px; cursor: pointer; text-align: center; transition: all 0.2s; }
   .btn-icon:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
-  .btn-add { background: #f8fafc; color: #3b82f6; border: 2px dashed #93c5fd; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 600; border-radius: 6px; display: inline-block; margin-top: 0.5rem; transition: all 0.2s; }
-  .btn-add:hover { background: #eff6ff; border-color: #3b82f6; }
+  .btn-add { background: var(--card-bg); color: var(--accent); border: 2px dashed var(--input-border); padding: 0.75rem 1.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 600; border-radius: 6px; display: inline-block; margin-top: 0.5rem; transition: all 0.2s; }
+  .btn-add:hover { border-color: var(--accent); }
 </style>
 <script>
   function addPatternRow() {
@@ -457,6 +504,15 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
       </div>\`;
     container.insertAdjacentHTML('beforeend', html);
   }
+  function toggleTheme() {
+    const root = document.documentElement;
+    const current = root.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('aos-theme', next);
+  }
+  const saved = localStorage.getItem('aos-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', saved);
 </script>
 </head><body>
   <div class="sidebar">
@@ -479,8 +535,9 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
       <a href="/docs" class="nav-item ${currentPath === '/docs' ? 'active' : ''}">Documentation</a>
     </div>
     <div class="sidebar-footer">
-      <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.75rem; text-align: center;">v${GATE_VERSION}</div>
-      <button onclick="checkUpdate()" id="update-btn" style="width: 100%; padding:0.6rem; margin-bottom:0.75rem; background:#f8fafc; color:#3b82f6; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s;">Check for Updates</button>
+      <button onclick="toggleTheme()" style="width: 100%; padding:0.6rem; margin-bottom:1rem; background:transparent; color:var(--text-sidebar); border:1px dashed var(--border-sidebar); border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s;">Toggle Dark / Light</button>
+      <div style="font-size: 0.75rem; color: var(--text-sidebar); margin-bottom: 0.75rem; text-align: center;">v${GATE_VERSION}</div>
+      <button onclick="checkUpdate()" id="update-btn" style="width: 100%; padding:0.6rem; margin-bottom:0.75rem; background:var(--bg-main); color:var(--accent); border:1px solid var(--border-sidebar); border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s;">Check for Updates</button>
       <a href="/logout" class="logout-btn">Sign Out</a>
     </div>
   </div>
