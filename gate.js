@@ -327,7 +327,7 @@ const dashboard = express();
 import crypto from 'crypto';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'aos-admin';
-const sessionTokens = new Set();
+const getSessionHash = () => crypto.createHash('sha256').update(ADMIN_PASSWORD + '-aos-salt').digest('hex');
 
 dashboard.use(express.urlencoded({ extended: true }));
 dashboard.use((req, res, next) => {
@@ -339,7 +339,7 @@ dashboard.use((req, res, next) => {
 });
 
 const requireAuth = (req, res, next) => {
-    if (sessionTokens.has(req.cookies.aos_gate_session)) return next();
+    if (req.cookies.aos_gate_session === getSessionHash()) return next();
     res.redirect('/login');
 };
 
@@ -389,9 +389,7 @@ dashboard.get('/login', (req, res) => {
 
 dashboard.post('/login', (req, res) => {
     if (req.body.password === ADMIN_PASSWORD) {
-        const token = crypto.randomBytes(16).toString('hex');
-        sessionTokens.add(token);
-        res.setHeader('Set-Cookie', `aos_gate_session=${token}; HttpOnly; Path=/; Max-Age=86400`);
+        res.setHeader('Set-Cookie', `aos_gate_session=${getSessionHash()}; HttpOnly; Path=/; Max-Age=86400`);
         res.redirect('/');
     } else {
         res.redirect('/login');
@@ -399,7 +397,6 @@ dashboard.post('/login', (req, res) => {
 });
 
 dashboard.get('/logout', (req, res) => {
-    if (req.cookies.aos_gate_session) sessionTokens.delete(req.cookies.aos_gate_session);
     res.setHeader('Set-Cookie', `aos_gate_session=; HttpOnly; Path=/; Max-Age=0`);
     res.redirect('/login');
 });
