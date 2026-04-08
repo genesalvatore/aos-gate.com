@@ -535,7 +535,7 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
     <div class="sidebar-footer">
       <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
         <a href="https://aos-constitution.com" target="_blank" class="logout-btn" style="flex:1; padding:0.5rem; font-size:0.75rem; margin-bottom:0;">Constitution</a>
-        <a href="https://aos-gate.com" target="_blank" class="logout-btn" style="flex:1; padding:0.5rem; font-size:0.75rem; margin-bottom:0;">Governance</a>
+        <a href="https://aos-governance.com" target="_blank" class="logout-btn" style="flex:1; padding:0.5rem; font-size:0.75rem; margin-bottom:0;">Governance</a>
       </div>
       <button onclick="toggleTheme()" style="width: 100%; padding:0.6rem; margin-bottom:1rem; background:transparent; color:var(--text-sidebar); border:1px dashed var(--border-sidebar); border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:600; transition:all 0.2s;">Toggle Dark / Light</button>
       <div style="font-size: 0.75rem; color: var(--text-sidebar); margin-bottom: 0.75rem; text-align: center;">v${GATE_VERSION}</div>
