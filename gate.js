@@ -475,6 +475,7 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
       <a href="/stats" class="nav-item ${currentPath === '/stats' ? 'active' : ''}">Usage Stats</a>
       <a href="/rules" class="nav-item ${currentPath === '/rules' ? 'active' : ''}">Policy &amp; Rules</a>
       <a href="/export" class="nav-item ${currentPath === '/export' ? 'active' : ''}">Export Logs</a>
+      <a href="/docs" class="nav-item ${currentPath === '/docs' ? 'active' : ''}">Documentation</a>
     </div>
     <div class="sidebar-footer">
       <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.5rem; text-align: center;">v${GATE_VERSION}</div>
@@ -797,6 +798,44 @@ dashboard.get('/api/logs', requireAuth, (_req, res) => {
         logs[file.replace('gate-', '').replace('.jsonl', '')] = entries;
     }
     res.json(logs);
+});
+
+// ─── Documentation ──────────────────────────────────────────────────────────
+dashboard.get('/docs', requireAuth, (_req, res) => {
+    const content = `
+      <div class="subtitle">Quick reference for routing, policy blocks, and workflow integrations.</div>
+      <div class="card">
+        <div class="card-header">Workflow Setup (N8N / Make / Zapier)</div>
+        <div class="card-body">
+            <h3 style="margin-bottom:0.5rem; color:#fff; font-size: 1rem;">Routing your API Calls</h3>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">To use AOS Gate, change the base URL in your HTTP request blocks to point to the proxy instead of the provider directly. Do not change your API keys—they will process normally.</p>
+            <table style="margin-bottom:1.5rem;">
+                <thead><tr><th>Original Endpoint</th><th>AOS Gate Proxy Endpoint</th></tr></thead>
+                <tbody>
+                    <tr><td>https://api.anthropic.com/v1/messages</td><td class="mono">http://aos-gate:3100/v1/messages</td></tr>
+                    <tr><td>https://api.openai.com/v1/chat/completions</td><td class="mono">http://aos-gate:3100/v1/chat/completions</td></tr>
+                </tbody>
+            </table>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;"><em>Note: If your automation tool is running outside of Docker directly on your system, use <code>localhost</code> instead of <code>aos-gate</code>.</em></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Policy Editor Reference</div>
+        <div class="card-body">
+            <h3 style="margin-bottom:0.5rem; color:#fff; font-size: 1rem;">Model Allowlisting</h3>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">Limits which AI models your workflows can use. Prevent users from requesting expensive models (e.g. <code>claude-3-opus-20240229</code>). Add one model string per line. Leave empty to allow any model.</p>
+            
+            <h3 style="margin-bottom:0.5rem; color:#fff; font-size: 1rem;">Content Regex Rules</h3>
+            <p style="color:#aaa; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">AOS Gate supports standard JavaScript RegExp. The proxy scans every outbound prompt. If a match is found, the request is immediately rejected with a 403 Forbidden status, and the event is logged as <strong>BLOCKED</strong>.</p>
+            <ul style="color:#aaa; font-size:0.85rem; line-height:1.6; padding-left:1.5rem; margin-bottom:1rem;">
+                <li><code>(?:confidential|internal)\\s+pricing</code> &rarr; Blocks leak of pricing matrices</li>
+                <li><code>sk-[a-zA-Z0-9]{48}</code> &rarr; Blocks outbound OpenAI keys from being transmitted</li>
+            </ul>
+        </div>
+      </div>
+    `;
+    res.send(renderLayout('Documentation', content, '/docs'));
 });
 
 dashboard.get('/update', requireAuth, (req, res) => {
