@@ -293,7 +293,6 @@ docker compose up -d --build
 | [aos-constitution.com](https://aos-constitution.com) | Constitutional governance framework and Humanitarian License |
 | [aos-patents.com](https://aos-patents.com) | Full patent portfolio registry (101 USPTO filings) |
 | [aos-evidence.com](https://aos-evidence.com) | Evidence preservation and validation |
-| [aos-foundation.com](https://aos-foundation.com) | Humanitarian mission and organizational governance |
 
 ---
 
