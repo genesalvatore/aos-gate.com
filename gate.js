@@ -922,9 +922,25 @@ dashboard.get('/how-it-works', requireAuth, (_req, res) => {
       <div class="card">
         <div class="card-header" style="color: var(--accent); font-weight: 800;">1. The "Physical" Bottleneck (It Blocks)</div>
         <div class="card-body">
-          <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.6; margin-bottom:0;">
+          <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.6; margin-bottom:1.5rem;">
             AOS Gate is not an API wrapped in promises—it is a physical network bottleneck running locally within your infrastructure. The proxy sits <em>before</em> the outbound HTTP request ever leaves the server. If the payload fails a configured regex policy, the outbound request is instantly aborted. The upstream API is never called, and a hard <code>403 Forbidden</code> is returned back to the agent or script. The packet dies on your hardware before it ever reaches San Francisco.
           </p>
+          <div style="padding: 1.5rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-family: monospace; font-size: 0.8rem; text-align: center;">
+            <div style="flex: 1;">
+              <div style="background:var(--card-bg); border:1px solid var(--border-color); padding:1rem; border-radius:6px; font-weight:bold; color:var(--text-main);">🤖 Agent Shell</div>
+              <div style="color:var(--text-muted); margin-top:0.5rem;">Restricted Prompt</div>
+            </div>
+            <div style="padding: 0 1rem; color:var(--accent); font-weight:bold;">&rarr; POST &rarr;</div>
+            <div style="flex: 1;">
+              <div style="background:var(--sidebar-active-bg); border:1px solid var(--border-sidebar); padding:1rem; border-radius:6px; font-weight:bold; color:#fff;">🛡️ AOS Gate</div>
+              <div style="color:var(--text-muted); margin-top:0.5rem;">Regex Denial</div>
+            </div>
+            <div style="padding: 0 1rem; color:#ef4444; font-weight:bold; font-size:1.2rem;">&times;</div>
+            <div style="flex: 1; opacity: 0.4;">
+              <div style="background:var(--card-bg); border:1px dashed var(--border-color); padding:1rem; border-radius:6px; font-weight:bold; color:var(--text-main);">☁️ Cloud API</div>
+              <div style="color:var(--text-muted); margin-top:0.5rem;">Never Reached</div>
+            </div>
+          </div>
         </div>
       </div>
 
