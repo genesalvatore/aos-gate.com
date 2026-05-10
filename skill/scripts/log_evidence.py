@@ -3,7 +3,7 @@
 AOS Governance — Immutable Evidence Logger
 ==========================================
 Logs verified governance decisions to an append-only evidence ledger.
-Each entry is cryptographically chained to the previous one, creating
+Each entry is hash-chained to the previous one, creating
 a tamper-evident record of all agent governance decisions.
 
 Usage:
@@ -69,7 +69,7 @@ def create_evidence_entry(
     context: str = "manual",
     agent_id: str | None = None,
 ) -> dict:
-    """Create a new evidence ledger entry with cryptographic chaining."""
+    """Create a new evidence ledger entry with hash chaining."""
     timestamp = datetime.now(timezone.utc).isoformat()
 
     # The chain hash links this entry to the previous one

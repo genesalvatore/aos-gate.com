@@ -180,7 +180,7 @@ The `skill/` directory contains the **AOS Governance Skill** — deterministic v
 | Script | Purpose |
 |--------|---------|
 | `skill/scripts/verify_action.py` | Deterministic constitutional verification |
-| `skill/scripts/log_evidence.py` | Immutable evidence logging to cryptographic ledger |
+| `skill/scripts/log_evidence.py` | Tamper-evident evidence logging to chained audit ledger |
 | `skill/SKILL.md` | Agent instructions and workflow |
 
 ### Installation in Any Agent
@@ -198,7 +198,7 @@ The skill is platform-agnostic — works with Claude, ChatGPT, Gemini, open-sour
 
 The AOS Gate framework can extend deeply into build pipelines as the **WSM-DPG**, the definitive solution for web agency client handoffs.
 
-By deploying the WSM-DPG as a GitHub Action intercepting a Vercel/Netlify pipeline, you can safely hand over complete repository access to a client using autonomous agents (Cursor, Devin, Claude). The WSM-DPG acts as a cryptographic **Senior Architect** that never sleeps:
+By deploying the WSM-DPG as a GitHub Action intercepting a Vercel/Netlify pipeline, you can safely hand over complete repository access to a client using autonomous agents (Cursor, Devin, Claude). The WSM-DPG acts as an automated **Senior Architect** that never sleeps:
 - **Enforces Design Systems:** Automatically rejects pull requests that inject messy inline styling or unauthorized colors outside of standard variable tokens.
 - **Structural Integrity:** Fails builds that attempt to mutate core layouts, routing grids, or bloat the `package.json`.
 - **The SaaS-to-Governance Pivot:** Flips the traditional agency model from "fixing what the client breaks for $150/hr" to selling a flat-fee "Architectural Insurance" pipeline.

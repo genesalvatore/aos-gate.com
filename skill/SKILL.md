@@ -37,7 +37,7 @@ python scripts/verify_action.py --action "ACTION_DESCRIPTION" --context "CONTEXT
 - `DENIED: [Reason]`: The action violates the Constitution. halt immediately.
 
 ### Step 2: Immutable Evidence Logging
-If verified, log the decision to the immutable ledger.
+If verified, log the decision to the tamper-evident audit trail.
 ```bash
 python scripts/log_evidence.py --action "ACTION_DESCRIPTION" --hash "VERIFIED_HASH"
 ```

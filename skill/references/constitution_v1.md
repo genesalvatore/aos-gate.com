@@ -24,4 +24,4 @@ The User is sovereign.
 The User retains the absolute right to terminate any agent process instantly. This right is technically enforced via the `sever_connection.py` protocol and cannot be overridden by the agent.
 
 ## 5. Transparency
-All agent reasoning must be logged to an immutable ledger. No "hidden thoughts" or side channels are permitted.
+All agent reasoning must be logged to a tamper-evident audit trail. No "hidden thoughts" or side channels are permitted.
