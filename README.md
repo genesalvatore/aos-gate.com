@@ -1,321 +1,231 @@
-# 🚪 AOS Gate
+# 🚪 AOS Gate v2.0
 
-**The open-source governance toolkit for AI workflows.**
+**Deterministic Intent Firewall, Real-Time SSE Streaming Proxy, and Cryptographic Audit Ledger for AI Workflows.**
 
-AOS Gate is a transparent audit proxy that sits between your AI automation tools (N8N, Make, Zapier, custom scripts) and the AI provider. It logs every exchange, detects sensitive data, enforces policy rules, and gives you a full enterprise dashboard — all in a single Docker container.
+AOS Gate is an open-source, sub-millisecond reverse proxy that sits between your AI automation agents (N8N, Make, LangChain, Cursor, Devin, custom daemons) and foundation LLM APIs (Anthropic, OpenAI, Google Gemini). It intercepts outbound prompts before external egress, inspects token streams in real time for hallucinated intent, enforces 3-mode PII protections, and commits tamper-evident SHA-256 hash-chained audit trails to local storage.
 
-**Think of it like a security camera + policy engine for your AI calls.** It records everything, blocks what you tell it to block, and gives you the forensic trail to prove what happened.
-
-This is the reference implementation of the [AOS Standard 1.0](https://aos-governance.com) — a governance architecture for the Intelligence Age.
-
-Licensed under the [AOS Humanitarian License v1.0.1](LICENSE) — peaceful civilian use only.
+This is the reference implementation of the [AOS Standard 1.0](https://aos-governance.com), licensed under the [AOS Humanitarian License v1.0.1](LICENSE) for peaceful civilian operations only.
 
 ---
 
-## What's Included
+## ⚡ What's New in v2.0.0
 
-| Component | Description |
-|-----------|-------------|
-| **AOS Gate Proxy** (port 3100) | Transparent API proxy with audit logging, PII detection, and policy enforcement |
-| **Admin Dashboard** (port 3101) | Enterprise UI with activity log, usage stats, policy editor, and log export |
-| **Governance Skill** (`skill/`) | Agent-installable governance scripts for constitutional verification |
-
----
-
-## 📋 What You Need Before Starting
-
-You need **Docker** installed on your computer. That's it.
-
-- **If you already have Docker running** (you'll know because you're running N8N or similar in containers), you're ready to go.
-- **If you don't have Docker yet**, install Docker Desktop from https://www.docker.com/products/docker-desktop/
-
-To check if Docker is installed, open a terminal and type:
-```
-docker --version
-```
-If you see a version number, you're good.
-
----
-
-## 🚀 Setup — Step by Step
-
-### Step 1: Download AOS Gate
-
-Open a terminal (Command Prompt on Windows, Terminal on Mac/Linux) and run:
-
-```bash
-git clone https://github.com/genesalvatore/aos-gate.com.git
-cd aos-gate.com
-```
-
-**Don't have git?** You can also download the ZIP file from GitHub and unzip it.
-
-### Step 2: Start AOS Gate
-
-In the same terminal, run:
-
-```bash
-docker compose up -d
-```
-
-That's it. AOS Gate is now running.
-
-You should see something like:
-```
-✔ Container aos-gate  Started
-```
-
-### Step 3: Verify It's Running
-
-Open your web browser and go to:
-
-```
-http://localhost:3101
-```
-
-You will be presented with the **Sovereign Admin** login screen.
-> **Default Passphrase:** `aos-admin`
-
-*(You can change this by setting the `ADMIN_PASSWORD` variable in your environment or `docker-compose.yml`.)*
-
-Once logged in, you should see the **AOS Gate Dashboard** — showing your audit log, usage stats, policy editor, and log export tools.
-
-### Step 4: Update Your N8N Nodes
-
-This is the only change you need to make to your existing setup.
-
-In your N8N workflow, find any **HTTP Request** node that calls an AI provider. Change the URL:
-
-| What you have now | Change it to |
+| Feature | Description |
 |---|---|
-| `https://api.anthropic.com/v1/messages` | `http://aos-gate:3100/v1/messages` |
-| `https://api.openai.com/v1/chat/completions` | `http://aos-gate:3100/v1/chat/completions` |
-
-**Important:** If N8N is running in Docker too, use `aos-gate` as the hostname. If N8N is running directly on your computer (not in Docker), use `localhost` instead:
-
-| N8N in Docker | N8N on your computer directly |
-|---|---|
-| `http://aos-gate:3100/v1/messages` | `http://localhost:3100/v1/messages` |
-
-**Your API keys stay exactly where they are** — in the N8N node's headers. AOS Gate just passes them through.
-
-### Step 5: Test It
-
-Run one of your N8N workflows that calls an AI model. Then check the dashboard at `http://localhost:3101`. You should see the call logged with:
-
-- ✅ **PASSED** — the call went through
-- ⏱ Duration in milliseconds
-- 📊 Token count (input/output)
-- ⚠️ Any PII warnings (emails, phone numbers, etc. detected in your prompts)
-
----
-
-## 📊 Dashboard
-
-The admin dashboard at `:3101` provides four pages:
-
-| Page | Description |
-|------|-------------|
-| **Activity Log** | Real-time audit trail with date navigation (← → arrows) |
-| **Usage Stats** | 14-day request volume chart + model usage breakdown |
-| **Policy & Rules** | GUI editor for log levels, model allowlists, and regex block rules |
-| **Export Logs** | One-click JSON/CSV download per day for compliance and evidence |
-
----
-
-## ⚙️ Customizing the Rules
-
-You can configure policy directly from the **Policy & Rules** page in the dashboard, or edit `policy.json` manually.
-
-### Restrict Which AI Models Can Be Used
-
-```json
-{
-    "allowedModels": [
-        "claude-sonnet-4-20250514",
-        "gpt-4o-mini"
-    ]
-}
-```
-
-If someone tries to use a model not on this list, AOS Gate will **block the request** and log it as `BLOCKED`.
-
-### Block Sensitive Topics
-
-Add patterns to `blockedPatterns` to prevent certain content from being sent to the AI:
-
-```json
-{
-    "blockedPatterns": [
-        {
-            "label": "Internal pricing",
-            "pattern": "confidential\\s+pricing",
-            "flags": "gi"
-        }
-    ]
-}
-```
-
-### Change Logging Detail
-
-Set `logLevel` to control how much is logged:
-
-- `"full"` — Logs the first 2,000 characters of every prompt and response (default)
-- `"meta"` — Logs only metadata (model, tokens, duration) — no prompt text
-
----
-
-## 🛡️ Governance Skill (Agent-Installable)
-
-The `skill/` directory contains the **AOS Governance Skill** — deterministic verification scripts that an AI agent can use to check its own actions against the AOS Constitution before execution.
-
-### How It Works
-
-1. **Intercept** — Agent proposes an action
-2. **Verify** — `verify_action.py` checks against the Constitution
-3. **Gate** — Action proceeds only if all checks pass. If not, it is blocked and logged.
-
-### Key Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `skill/scripts/verify_action.py` | Deterministic constitutional verification |
-| `skill/scripts/log_evidence.py` | Tamper-evident evidence logging to chained audit ledger |
-| `skill/SKILL.md` | Agent instructions and workflow |
-
-### Installation in Any Agent
-
-```bash
-cp -r skill/ ./your-agent/skills/aos-governance
-export AOS_CONSTITUTION_PATH=./skills/aos-governance/references
-```
-
-The skill is platform-agnostic — works with Claude, ChatGPT, Gemini, open-source models, or custom implementations.
-
----
-
-## 🏢 Enterprise Application: WSM-DPG (Website Manager DPG)
-
-The AOS Gate framework can extend deeply into build pipelines as the **WSM-DPG**, the definitive solution for web agency client handoffs.
-
-By deploying the WSM-DPG as a GitHub Action intercepting a Vercel/Netlify pipeline, you can safely hand over complete repository access to a client using autonomous agents (Cursor, Devin, Claude). The WSM-DPG acts as an automated **Senior Architect** that never sleeps:
-- **Enforces Design Systems:** Automatically rejects pull requests that inject messy inline styling or unauthorized colors outside of standard variable tokens.
-- **Structural Integrity:** Fails builds that attempt to mutate core layouts, routing grids, or bloat the `package.json`.
-- **The SaaS-to-Governance Pivot:** Flips the traditional agency model from "fixing what the client breaks for $150/hr" to selling a flat-fee "Architectural Insurance" pipeline.
-- **The Upsell Trigger:** Whenever the Gate blocks a garbage-code PR generated by a client's agent, it creates an immediate, highly qualified lead for your agency to execute the custom architecture securely.
+| **Dynamic Glob Model Allowlist** | Matches wildcard patterns (`claude-sonnet-4-*`, `gpt-4o*`, `gemini-*`, `*`) with sub-millisecond regex compilation. |
+| **Real-Time SSE Streaming Proxy** | Transparently pipes Server-Sent Events (`text/event-stream`) chunk-by-chunk while evaluating downstream tool and intent payloads. |
+| **Google Gemini Native Routing** | Proxies `POST /v1beta/models/:modelAction` with support for `x-goog-api-key`, `Authorization`, and `?key=` parameters. |
+| **3-Mode PII Engine** | Detects SSN, Credit Cards, Emails, US Phone Numbers, AWS Access Keys, and API Secret Keys in `warn`, `redact`, or `block` mode. |
+| **Deterministic Local Evaluator** | `POST /v1/evaluate` tests policy compliance, PII findings, redacted text, and SHA-256 chain hashes locally without network transit. |
+| **SHA-256 Hash-Chained Ledger** | Every audit record in `gate-YYYY-MM-DD.jsonl` links cryptographically to the preceding record back to `AOS-GATE-2.0:GENESIS`. |
+| **1-Click Chain Verifier** | Built-in verification endpoint `GET /api/verify-chain` and dashboard button to validate ledger integrity. |
+| **Hardened Container Architecture** | Docker image updated with `node:22-alpine`, non-root `node` execution, embedded governance skill, and active healthcheck. |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-                    Your Computer / Server
-┌──────────────────────────────────────────────────┐
-│                                                  │
-│   CRM Webhook ──→ N8N ──→ AOS Gate ──→ Claude    │
-│                            │    │        API     │
-│                            │    │                │
-│                         Logs  Dashboard          │
-│                       (JSONL) (port 3101)        │
-│                                                  │
-└──────────────────────────────────────────────────┘
+                                CLIENT / WORKFLOW
+                  (N8N, Make, LangChain, Cursor, Custom Daemons)
+                                        │
+                                        │ HTTP POST (Streaming or Sync)
+                                        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         AOS GATE PROXY CORE (:3100)                          │
+│                                                                              │
+│  [1. Inbound Pre-Flight Inspection]                                          │
+│  ├── Dynamic Glob Allowlist Matcher: "claude-sonnet-4-*", "gemini-*"        │
+│  ├── 3-Mode PII Engine: [REDACTED_SSN], [REDACTED_KEY], [REDACTED_EMAIL]     │
+│  └── Content Regex Check: Instant 403 Forbidden termination                  │
+│                                                                              │
+│  [2. Protocol Router & Real-Time SSE Transform]                             │
+│  ├── Anthropic (/v1/messages)                                                │
+│  ├── OpenAI / Ollama (/v1/chat/completions)                                  │
+│  ├── Google Gemini (/v1beta/models/:modelAction)                             │
+│  ├── Model Catalog Passthrough (/v1/models)                                  │
+│  └── Downstream Chunk Inspection: Abort hallucinated intent mid-stream       │
+│                                                                              │
+│  [3. Cryptographic Audit Engine]                                             │
+│  ├── Native SHA-256 Hash-Chained JSONL Ledgers (gate-YYYY-MM-DD.jsonl)       │
+│  └── Deterministic Local Evaluator (/v1/evaluate)                            │
+└───────────────────────┬──────────────────────────────┬───────────────────────┘
+                        │ Outbound API Request         │ Local State Sync
+                        ▼                              ▼
+             UPSTREAM AI PROVIDERS             SOVEREIGN ADMIN PORTAL (:3101)
+          (Anthropic, OpenAI, Gemini)         (Activity Log, Stats, Policy Editor)
 ```
-
-AOS Gate is a **transparent proxy**. It doesn't change your prompts or responses. It just records them and checks them against your rules before forwarding.
 
 ---
 
-## 📁 Where Are the Logs?
+## 📋 Endpoints Reference
 
-Logs are stored as daily files inside the Docker volume. To access them:
+### Proxy Service (`:3100`)
 
-```bash
-# See today's log
-docker exec aos-gate cat /data/logs/gate-$(date +%Y-%m-%d).jsonl
+| Method | Endpoint | Upstream Target | Features |
+|---|---|---|---|
+| `POST` | `/v1/messages` | `https://api.anthropic.com/v1/messages` | SSE Streaming, Model Wildcards, 3-Mode PII, Intent Intercept |
+| `POST` | `/v1/chat/completions` | `https://api.openai.com/v1/chat/completions` | SSE Streaming, Model Wildcards, 3-Mode PII, Intent Intercept |
+| `POST` | `/v1beta/models/:modelAction` | `https://generativelanguage.googleapis.com` | Gemini API, SSE Streaming, PII Scanning, Intent Intercept |
+| `GET` | `/v1/models` | Upstream OpenAI or Local Allowlist | Transparent model discovery for SDKs and workflows |
+| `POST` | `/v1/evaluate` | Deterministic Local Engine | Pre-flight test oracle: returns decisions, redactions, and hashes |
+| `GET` | `/health` | Internal Status | Uptime, active policy status, piiAction, and genesis hash |
 
-# Or copy all logs to your computer
-docker cp aos-gate:/data/logs ./my-logs
-```
+### Dashboard & Verification Service (`:3101`)
 
-You can also download logs directly from the **Export Logs** page in the dashboard as JSON or CSV.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Real-time activity log with daily navigation and ledger badges |
+| `GET` | `/stats` | Request volume chart and model consumption distribution |
+| `GET/POST`| `/rules` | Visual policy editor with instant hot-reload |
+| `GET` | `/export` | Daily JSONL download interface |
+| `GET` | `/export/download` | CSV / JSON compliance export with hash chain columns |
+| `GET` | `/api/verify-chain` | Cryptographic verification of all `.jsonl` audit records |
+| `GET` | `/api/logs` | Structured JSON log access for monitoring integrations |
 
 ---
 
-## 🔧 Common Issues
+## 🚀 Quickstart
 
-### "Cannot connect to aos-gate from N8N"
-
-Your N8N and AOS Gate need to be on the same Docker network. Add this to your N8N's `docker-compose.yml`:
-
-```yaml
-services:
-  n8n:
-    # ... your existing n8n config ...
-    networks:
-      - default
-      - aos-gate_default
-
-networks:
-  aos-gate_default:
-    external: true
-```
-
-Then restart N8N: `docker compose restart`
-
-### "I changed policy.json but nothing happened"
-
-Edit policy from the dashboard instead — changes apply immediately. If editing manually, restart the gate: `docker compose restart`
-
-### "I want to stop AOS Gate"
+### 1. Run with Docker Compose
 
 ```bash
+git clone https://github.com/genesalvatore/aos-gate.com.git
 cd aos-gate.com
-docker compose down
+docker compose up -d
 ```
 
-Your N8N workflows will stop working until you either restart AOS Gate or change the URLs back to the original provider URLs.
-
-### "I want to update AOS Gate"
+### 2. Verify Container Health
 
 ```bash
-cd aos-gate.com
-git pull
-docker compose up -d --build
+curl http://localhost:3100/health
+```
+
+Expected response:
+```json
+{
+  "status": "ok",
+  "version": "2.0.0",
+  "uptime": 12.4,
+  "policy": true,
+  "piiAction": "warn",
+  "genesisHash": "48be93d89c112f3362146972bbfdaefa4565834fd7be08829bc7aa7ebaf7095e"
+}
+```
+
+### 3. Access Sovereign Dashboard
+
+Open `http://localhost:3101` in your browser.
+Default passphrase: `aos-admin` (configured via `ADMIN_PASSWORD` in `docker-compose.yml`).
+
+---
+
+## 🔒 Policy Configuration (`policy.json`)
+
+Edits made in `/rules` take effect in memory immediately without restarting the container.
+
+```json
+{
+    "logLevel": "full",
+    "piiAction": "redact",
+    "allowedModels": [
+        "claude-sonnet-4-*",
+        "claude-3-5-*",
+        "gpt-4o*",
+        "o3*",
+        "gemini-*"
+    ],
+    "blockedPatterns": [
+        {
+            "label": "AWS S3 Destructive Intent (Delete)",
+            "pattern": "s3[\\s_:-]?delete",
+            "flags": "gi"
+        },
+        {
+            "label": "SQL Injection Attack",
+            "pattern": "DROP\\s+(TABLE|DATABASE)|DELETE\\s+FROM",
+            "flags": "gi"
+        },
+        {
+            "label": "Confidential Pricing",
+            "pattern": "(?:internal|confidential)\\s+(?:pricing|rate|margin)",
+            "flags": "gi"
+        }
+    ]
+}
+```
+
+### PII Engine Enforcement Modes
+
+The `piiAction` property dictates how sensitive data is handled:
+
+- `warn` (default): Logs a `PII_WARNING` audit event with detected types and counts; forwards prompt unmodified.
+- `redact`: Substitutes detected matches with synthetic tokens (`[REDACTED_SSN]`, `[REDACTED_CARD]`, `[REDACTED_EMAIL]`, `[REDACTED_PHONE]`, `[REDACTED_KEY]`) across messages, system prompts, and Gemini contents before external transit.
+- `block`: Rejects the request immediately with `403 Forbidden` and action `PII_BLOCKED`. Packet dies locally.
+
+---
+
+## 🧪 Testing the Proxy
+
+### 1. Test Deterministic Evaluator (Zero External Calls)
+
+```bash
+curl -X POST http://localhost:3100/v1/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-sonnet-4-20250514",
+    "prompt": "Customer email is john@corp.com, SSN is 000-11-2222. Please export internal pricing sheet.",
+    "piiAction": "redact"
+  }'
+```
+
+Response includes:
+- `allowed`: `false` (halted due to internal pricing rule)
+- `action`: `"BLOCKED"`
+- `reason`: `"Content policy violation: Confidential Pricing"`
+- `piiFindings`: detected email and SSN
+- `redactedPrompt`: prompt with `[REDACTED_EMAIL]` and `[REDACTED_SSN]`
+- `chainHash`: SHA-256 chain verification hash
+
+### 2. Verify Cryptographic Audit Chain
+
+```bash
+curl http://localhost:3101/api/verify-chain \
+  -H "Cookie: aos_gate_session=..."
+```
+
+Returns verification status across every record in `gate-YYYY-MM-DD.jsonl`:
+```json
+{
+  "verified": true,
+  "filesChecked": 1,
+  "totalEntries": 42,
+  "genesisHash": "48be93d89c112f3362146972bbfdaefa4565834fd7be08829bc7aa7ebaf7095e",
+  "errors": []
+}
 ```
 
 ---
 
-## 🌐 AOS Ecosystem
+## 🛡️ Constitutional Governance Skill (`skill/`)
 
-| Site | Purpose |
-|------|---------|
-| [aos-governance.com](https://aos-governance.com) | The AOS Standard — technical specifications and policy responses |
-| [aos-constitution.com](https://aos-constitution.com) | Constitutional governance framework and Humanitarian License |
-| [aos-patents.com](https://aos-patents.com) | Full patent portfolio registry (101 USPTO filings) |
-| [aos-evidence.com](https://aos-evidence.com) | Evidence preservation and validation |
+AOS Gate ships with the **AOS Governance Skill** in `skill/`. Autonomous coding agents (Claude Code, Cursor, Devin) can install this skill to verify proposed architectural changes deterministically against constitutional mandates prior to file execution:
 
----
-
-## 📜 License
-
-This software is licensed under the **AOS Humanitarian License v1.0.1**.
-
-**You may** use this software freely for peaceful civilian purposes — personal projects, business operations, research, education.
-
-**You may not** use this software for weapons, military applications, surveillance, exploitation, or any purpose that causes measurable harm to human welfare.
-
-**Patent Notice:** This software implements standard proxy and audit patterns. Advanced AOS-patented methods (Deterministic Policy Gate, AOS Attest, Constitutional Governance Framework) are documented in the [AOS Standard](https://aos-governance.com) and available under separate licensing terms.
-
-Full license text: [LICENSE](LICENSE)
-Full license details: https://aos-constitution.com
+```bash
+python skill/scripts/verify_action.py --action "Delete production database table"
+# Returns: DENIED: Violates Constitutional Principle 2
+```
 
 ---
 
-## 👤 Attribution
+## 📜 License & Humanitarian Mandate
 
-Built by [Gene Salvatore](https://aos-governance.com) / AOS (Agentic Operating System)
+AOS Gate is licensed under the **AOS Humanitarian License v1.0.1**.
 
-- Standard: https://aos-governance.com
-- Constitution: https://aos-constitution.com
-- Patents: https://aos-patents.com
-- Contact: gene@aos-governance.com
+- **Permitted:** Peaceful commercial use, internal enterprise security, privacy preservation, academic research, and civilian software development.
+- **Strictly Prohibited:** Military command systems, autonomous weapons, domestic surveillance pipelines, human rights violations, or harmful automated exploitation.
+
+Full license text: [LICENSE](LICENSE)  
+Constitutional Framework: [https://aos-constitution.com](https://aos-constitution.com)  
+Standard Specifications: [https://aos-governance.com](https://aos-governance.com)  
+Patent Portfolio: [https://aos-patents.com](https://aos-patents.com)

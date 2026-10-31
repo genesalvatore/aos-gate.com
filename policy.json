@@ -1,26 +1,27 @@
 {
     "logLevel": "full",
+    "piiAction": "warn",
     "allowedModels": [
-        "claude-sonnet-4-20250514",
-        "claude-3-5-sonnet-20241022",
-        "claude-3-5-haiku-20241022",
-        "gpt-4o",
-        "gpt-4o-mini"
+        "claude-sonnet-4-*",
+        "claude-3-5-*",
+        "gpt-4o*",
+        "o3*",
+        "gemini-*"
     ],
     "blockedPatterns": [
         {
             "label": "AWS S3 Destructive Intent (Delete)",
-            "pattern": "s3[_:-]?delete",
+            "pattern": "s3[\\s_:-]?delete",
             "flags": "gi"
         },
         {
             "label": "AWS S3 Destructive Intent (Put/Write)",
-            "pattern": "s3[_:-]?put",
+            "pattern": "s3[\\s_:-]?put",
             "flags": "gi"
         },
         {
             "label": "Stripe Destructive Intent (Delete/Cancel)",
-            "pattern": "stripe[_:-]?(delete|cancel)",
+            "pattern": "stripe[\\s_:-]?(delete|cancel)",
             "flags": "gi"
         },
         {

@@ -1,7 +1,7 @@
 {
   "name": "aos-gate",
-  "version": "1.0.1",
-  "description": "Drop-in LLM API proxy with audit logging for N8N workflows",
+  "version": "2.0.0",
+  "description": "Deterministic AI intent firewall and audit proxy with real-time SSE streaming, multi-provider routing, 3-mode PII protection, and SHA-256 hash-chained audit ledgers",
   "type": "module",
   "main": "gate.js",
   "scripts": {
