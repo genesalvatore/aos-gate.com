@@ -18,7 +18,7 @@
 
 import express from 'express';
 import { mkdirSync, appendFileSync, readFileSync, existsSync, readdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import crypto from 'crypto';
 import https from 'https';
 
@@ -27,6 +27,13 @@ const GATE_VERSION = pkg.version || '2.0.0';
 const GENESIS_HASH = crypto.createHash('sha256').update('AOS-GATE-2.0:GENESIS').digest('hex');
 
 const app = express();
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
 const GATE_PORT = process.env.GATE_PORT || 3100;
 const DASHBOARD_PORT = process.env.DASHBOARD_PORT || 3101;
 const LOG_DIR = process.env.LOG_DIR || './logs';
@@ -172,10 +179,13 @@ export function scanForBlockedContent(text) {
 const lastChainHashByDate = new Map();
 
 export function getLastChainHash(date) {
-    if (lastChainHashByDate.has(date)) {
-        return lastChainHashByDate.get(date);
+    const safeDate = String(date || '').replace(/[^0-9a-zA-Z_-]/g, '');
+    if (lastChainHashByDate.has(safeDate)) {
+        return lastChainHashByDate.get(safeDate);
     }
-    const logFile = join(LOG_DIR, `gate-${date}.jsonl`);
+    const resolvedLogDir = resolve(LOG_DIR);
+    const logFile = resolve(resolvedLogDir, `gate-${safeDate}.jsonl`);
+    if (!logFile.startsWith(resolvedLogDir)) return GENESIS_HASH;
     if (existsSync(logFile)) {
         try {
             const content = readFileSync(logFile, 'utf-8');
@@ -183,7 +193,7 @@ export function getLastChainHash(date) {
             if (lines.length > 0) {
                 const last = JSON.parse(lines[lines.length - 1]);
                 if (last.chain_hash) {
-                    lastChainHashByDate.set(date, last.chain_hash);
+                    lastChainHashByDate.set(safeDate, last.chain_hash);
                     return last.chain_hash;
                 }
             }
@@ -191,7 +201,7 @@ export function getLastChainHash(date) {
             console.warn(`[Audit] Could not read last chain hash from ${logFile}:`, e.message);
         }
     }
-    lastChainHashByDate.set(date, GENESIS_HASH);
+    lastChainHashByDate.set(safeDate, GENESIS_HASH);
     return GENESIS_HASH;
 }
 
@@ -1102,6 +1112,13 @@ app.listen(GATE_PORT, () => {
 
 // ─── Audit Dashboard Server ─────────────────────────────────────────────────
 const dashboard = express();
+dashboard.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'aos-admin';
 const getSessionHash = () => crypto.createHash('sha256').update(ADMIN_PASSWORD + '-aos-salt').digest('hex');
@@ -1353,8 +1370,10 @@ const renderLayout = (title, content, currentPath) => `<!DOCTYPE html>
 
 // Helper: read entries for a given date string
 function readEntriesForDate(date) {
-    const logFile = join(LOG_DIR, `gate-${date}.jsonl`);
-    if (!existsSync(logFile)) return [];
+    const safeDate = String(date || '').replace(/[^0-9a-zA-Z_-]/g, '');
+    const resolvedLogDir = resolve(LOG_DIR);
+    const logFile = resolve(resolvedLogDir, `gate-${safeDate}.jsonl`);
+    if (!logFile.startsWith(resolvedLogDir) || !existsSync(logFile)) return [];
     return readFileSync(logFile, 'utf-8')
         .split('\n').filter(Boolean)
         .map(line => { try { return JSON.parse(line); } catch { return null; } })

@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "express": "^5.1.0"
+  },
+  "overrides": {
+    "raw-body": "^4.0.0"
   }
 }
